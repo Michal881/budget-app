@@ -5,312 +5,711 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Budget App</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 1000px;
-      margin: 40px auto;
-      padding: 20px;
-      background: #f7f7f7;
-      color: #222;
+    :root {
+      --bg: #f6f8fc;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --text: #1f2937;
+      --text-soft: #6b7280;
+      --border: #e5e7eb;
+      --border-strong: #d1d5db;
+      --primary: #1a73e8;
+      --primary-hover: #1765cc;
+      --danger: #d93025;
+      --danger-soft: #fce8e6;
+      --success: #188038;
+      --warning: #b06000;
+      --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px rgba(16, 24, 40, 0.06);
+      --radius: 20px;
     }
 
-    h1, h2 {
-      margin-top: 0;
-    }
-
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-
-    ul {
-      padding-left: 20px;
-      margin: 0;
-    }
-
-    .summary-row {
-      margin: 8px 0;
-      font-size: 18px;
-    }
-
-    .label {
-      font-weight: bold;
-    }
-
-    form {
-      display: grid;
-      gap: 12px;
-      max-width: 500px;
-    }
-
-    .summary-form {
-      display: grid;
-      gap: 12px;
-      max-width: 500px;
-      margin-bottom: 20px;
-    }
-
-    input, select, button {
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+    * {
       box-sizing: border-box;
     }
 
+    html, body {
+      margin: 0;
+      padding: 0;
+      font-family: Inter, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .app-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 20px 56px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: 36px;
+      line-height: 1.1;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .page-subtitle {
+      margin: 8px 0 0;
+      color: var(--text-soft);
+      font-size: 15px;
+      line-height: 1.5;
+      max-width: 700px;
+    }
+
+    .topbar-badge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--primary);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: var(--shadow);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+    }
+
+    .card-header {
+      margin-bottom: 18px;
+    }
+
+    .card-title {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.2;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .card-subtitle {
+      margin: 8px 0 0;
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field-label {
+      display: block;
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: var(--text-soft);
+      font-weight: 600;
+    }
+
+    input,
+    select,
     button {
-      background: #111827;
-      color: white;
-      cursor: pointer;
+      font: inherit;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 14px;
+      border: 1px solid var(--border-strong);
+      background: #fff;
+      color: var(--text);
+      padding: 0 14px;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.12);
+    }
+
+    input[type="color"] {
+      padding: 6px;
+      min-height: 48px;
+    }
+
+    .button {
+      min-height: 46px;
       border: none;
+      border-radius: 14px;
+      padding: 0 18px;
+      cursor: pointer;
+      transition: background 0.18s ease, transform 0.05s ease, opacity 0.18s ease;
+      font-weight: 600;
     }
 
-    button:hover {
-      opacity: 0.9;
+    .button:active {
+      transform: translateY(1px);
     }
 
-    .message {
-      margin-top: 10px;
-      font-weight: bold;
-      min-height: 24px;
+    .button-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .button-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .button-secondary {
+      background: #eef2f7;
+      color: #334155;
+      border: 1px solid var(--border);
+    }
+
+    .button-secondary:hover {
+      background: #e7edf5;
+    }
+
+    .button-danger {
+      background: var(--danger-soft);
+      color: var(--danger);
+      border: 1px solid #f4c7c3;
+    }
+
+    .button-danger:hover {
+      background: #f8dbd8;
+    }
+
+    .button-small {
+      min-height: 38px;
+      padding: 0 14px;
+      border-radius: 12px;
+      font-size: 14px;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .helper-text {
+      min-height: 20px;
+      color: var(--text-soft);
+      font-size: 13px;
+    }
+
+    .stats-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .stat-card {
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .stat-label {
+      color: var(--text-soft);
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 10px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .value-green {
+      color: var(--success);
+    }
+
+    .value-red {
+      color: var(--danger);
+    }
+
+    .value-orange {
+      color: var(--warning);
+    }
+
+    .categories-stack {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .category-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 12px 14px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    .expense-list {
+      display: grid;
+      gap: 12px;
     }
 
     .expense-item {
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .expense-main {
       display: flex;
+      align-items: flex-start;
       justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 10px;
-      padding: 10px 12px;
-      background: #fafafa;
-      border-radius: 8px;
+      gap: 16px;
     }
 
-    .expense-text {
-      flex: 1;
+    .expense-title {
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.35;
+      margin-bottom: 6px;
     }
 
-    .delete-button {
-      background: #b91c1c;
-      padding: 6px 10px;
+    .expense-meta {
+      color: var(--text-soft);
       font-size: 14px;
-      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
-    .empty-text {
-      color: #666;
+    .expense-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .empty-state {
+      color: var(--text-soft);
       font-style: italic;
+      padding: 10px 0 2px;
+    }
+
+    .edit-panel {
+      display: none;
+      background: #f8fbff;
+      border: 1px dashed #b6d0fb;
+      border-radius: 16px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+
+    .edit-panel.active {
+      display: block;
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      color: var(--text-soft);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 920px) {
+      .grid-2,
+      .stats-grid,
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .expense-main {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Budget App</h1>
-
-  <div class="card">
-    <h2>Dodaj wydatek</h2>
-    <form id="expense-form">
-      <input type="number" id="amount" placeholder="Kwota" step="0.01" required />
-      <select id="category" required></select>
-      <input type="text" id="description" placeholder="Opis" required />
-      <input type="date" id="date" required />
-      <button type="submit">Dodaj wydatek</button>
-    </form>
-    <div class="message" id="form-message"></div>
-  </div>
-
-  <div class="card">
-    <h2>Dodaj plan budżetu</h2>
-    <form id="budget-plan-form">
-      <select id="plan-category" required></select>
-      <input type="number" id="plan-year" placeholder="Rok" value="2026" required />
-      <input type="number" id="plan-month" placeholder="Miesiąc" value="4" min="1" max="12" required />
-      <input type="number" id="planned-amount" placeholder="Planowana kwota" step="0.01" required />
-      <button type="submit">Dodaj plan budżetu</button>
-    </form>
-    <div class="message" id="plan-message"></div>
-  </div>
-
-  <div class="card">
-    <h2>Kategorie</h2>
-    <ul id="categories-list"></ul>
-  </div>
-
-  <div class="card">
-    <h2>Wydatki</h2>
-    <div id="expenses-list"></div>
-  </div>
-
-  <div class="card">
-    <h2>Podsumowanie budżetu</h2>
-
-    <div class="summary-form">
-      <select id="summary-category"></select>
-      <input type="number" id="summary-year" placeholder="Rok" value="2026" />
-      <input type="number" id="summary-month" placeholder="Miesiąc" value="4" min="1" max="12" />
-      <button id="summary-button" type="button">Pokaż podsumowanie</button>
+  <div class="app-shell">
+    <div class="topbar">
+      <div>
+        <h1 class="page-title">Budget App</h1>
+        <p class="page-subtitle">
+          Lekki, uporządkowany pulpit do zarządzania wydatkami, kategoriami, kolorami i limitem miesięcznym.
+        </p>
+      </div>
+      <div class="topbar-badge">Local app · SQLite</div>
     </div>
 
-    <div class="summary-row"><span class="label">Kategoria:</span> <span id="summary-category-value"></span></div>
-    <div class="summary-row"><span class="label">Plan:</span> <span id="summary-planned"></span></div>
-    <div class="summary-row"><span class="label">Wydane:</span> <span id="summary-spent"></span></div>
-    <div class="summary-row"><span class="label">Zostało:</span> <span id="summary-remaining"></span></div>
+    <div class="dashboard-grid grid-2">
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">Dodaj wydatek</h2>
+          <p class="card-subtitle">Wpisz nowy koszt i przypisz go do właściwej kategorii.</p>
+        </div>
+
+        <form id="form" class="form-grid">
+          <div>
+            <label class="field-label" for="amount">Kwota</label>
+            <input id="amount" type="number" step="0.01" placeholder="np. 42.50" required />
+          </div>
+
+          <div>
+            <label class="field-label" for="category">Kategoria</label>
+            <select id="category"></select>
+          </div>
+
+          <div>
+            <label class="field-label" for="description">Opis</label>
+            <input id="description" placeholder="np. obiad, taxi, kino" required />
+          </div>
+
+          <div>
+            <label class="field-label" for="date">Data</label>
+            <input id="date" type="date" required />
+          </div>
+
+          <button type="submit" class="button button-primary">Dodaj wydatek</button>
+        </form>
+
+        <div id="form-message" class="helper-text"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2 class="card-title">Zarządzanie kategoriami</h2>
+          <p class="card-subtitle">Dodawaj własne kategorie i przypisuj im kolory zapisywane w bazie danych.</p>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <label class="field-label" for="new-category">Nazwa kategorii</label>
+            <input id="new-category" placeholder="np. zdrowie, podróże, e-ON" />
+          </div>
+
+          <div>
+            <label class="field-label" for="category-color">Kolor kategorii</label>
+            <input id="category-color" type="color" value="#1a73e8" />
+          </div>
+
+          <button type="button" class="button button-primary" onclick="addCategory()">Dodaj kategorię</button>
+        </div>
+
+        <div id="categories-list" class="categories-stack"></div>
+        <div class="footer-note">
+          Kategorię można usunąć tylko wtedy, gdy nie ma do niej przypisanych wydatków.
+        </div>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top: 20px;">
+      <div class="card-header">
+        <h2 class="card-title">Filtr i limit miesięczny</h2>
+        <p class="card-subtitle">Przeglądaj wydatki po kategoriach i kontroluj budżet dla wybranego miesiąca.</p>
+      </div>
+
+      <div class="dashboard-grid grid-2">
+        <div class="form-grid">
+          <div>
+            <label class="field-label" for="filter">Filtr kategorii</label>
+            <select id="filter">
+              <option value="">Wszystkie</option>
+            </select>
+          </div>
+
+          <div class="button-row">
+            <button type="button" class="button button-primary button-small" onclick="applyFilter()">Pokaż</button>
+            <button type="button" class="button button-secondary button-small" onclick="clearFilter()">Wyczyść</button>
+          </div>
+        </div>
+
+        <form id="limit-form" class="form-grid">
+          <div class="form-row">
+            <div>
+              <label class="field-label" for="limit-year">Rok</label>
+              <input id="limit-year" type="number" value="2026" required />
+            </div>
+
+            <div>
+              <label class="field-label" for="limit-month">Miesiąc</label>
+              <input id="limit-month" type="number" value="4" min="1" max="12" required />
+            </div>
+          </div>
+
+          <div>
+            <label class="field-label" for="limit-amount">Limit miesięczny</label>
+            <input id="limit-amount" type="number" step="0.01" placeholder="np. 3000" required />
+          </div>
+
+          <button type="submit" class="button button-primary">Zapisz limit</button>
+        </form>
+      </div>
+
+      <div class="stats-grid" style="margin-top: 18px;">
+        <div class="stat-card">
+          <div class="stat-label">Limit</div>
+          <div class="stat-value" id="monthly-limit">0 PLN</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Wydane</div>
+          <div class="stat-value value-orange" id="monthly-spent">0 PLN</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Zostało</div>
+          <div class="stat-value" id="monthly-remaining">0 PLN</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top: 20px;">
+      <div class="card-header">
+        <h2 class="card-title">Wydatki</h2>
+        <p class="card-subtitle">Możesz usuwać i edytować wpisy bez opuszczania widoku listy.</p>
+      </div>
+
+      <div id="list" class="expense-list"></div>
+    </section>
   </div>
 
   <script>
-    const API_BASE = "https://budget-app-0lyq.onrender.com";
-
-    function setTodayDate() {
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, "0");
-      const day = String(today.getDate()).padStart(2, "0");
-      document.getElementById("date").value = `${year}-${month}-${day}`;
-    }
+    const API = "http://127.0.0.1:8000";
+    let currentFilter = "";
+    let categoriesMap = {};
 
     async function loadCategories() {
-      const response = await fetch(`${API_BASE}/categories`);
-      const categories = await response.json();
+      const res = await fetch(`${API}/categories`);
+      const data = await res.json();
 
+      const select = document.getElementById("category");
+      const filter = document.getElementById("filter");
       const categoriesList = document.getElementById("categories-list");
-      const expenseSelect = document.getElementById("category");
-      const summarySelect = document.getElementById("summary-category");
-      const planSelect = document.getElementById("plan-category");
 
+      select.innerHTML = "";
+      filter.innerHTML = '<option value="">Wszystkie</option>';
       categoriesList.innerHTML = "";
-      expenseSelect.innerHTML = "";
-      summarySelect.innerHTML = "";
-      planSelect.innerHTML = "";
+      categoriesMap = {};
 
-      if (!Array.isArray(categories) || categories.length === 0) {
-        categoriesList.innerHTML = '<li class="empty-text">Brak kategorii</li>';
-        return;
-      }
+      data.forEach(c => {
+        categoriesMap[c.name] = c.color;
 
-      categories.forEach(category => {
-        const li = document.createElement("li");
-        li.textContent = category;
-        categoriesList.appendChild(li);
+        const optionMain = document.createElement("option");
+        optionMain.value = c.name;
+        optionMain.textContent = c.name;
+        select.appendChild(optionMain);
 
-        const option1 = document.createElement("option");
-        option1.value = category;
-        option1.textContent = category;
-        expenseSelect.appendChild(option1);
+        const optionFilter = document.createElement("option");
+        optionFilter.value = c.name;
+        optionFilter.textContent = c.name;
+        filter.appendChild(optionFilter);
 
-        const option2 = document.createElement("option");
-        option2.value = category;
-        option2.textContent = category;
-        summarySelect.appendChild(option2);
+        const item = document.createElement("div");
+        item.className = "category-item";
 
-        const option3 = document.createElement("option");
-        option3.value = category;
-        option3.textContent = category;
-        planSelect.appendChild(option3);
+        item.innerHTML = `
+          <div class="chip" style="background:${c.color}">${c.name}</div>
+          <button type="button" class="button button-danger button-small" onclick="deleteCategory('${encodeURIComponent(c.name)}')">Usuń</button>
+        `;
+
+        categoriesList.appendChild(item);
       });
     }
 
-    async function loadExpenses() {
-      const response = await fetch(`${API_BASE}/expenses`);
-      const expenses = await response.json();
+    async function addCategory() {
+      const input = document.getElementById("new-category");
+      const color = document.getElementById("category-color").value;
+      const name = input.value.trim();
 
-      const list = document.getElementById("expenses-list");
+      if (!name) return;
+
+      await fetch(`${API}/categories`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ name, color })
+      });
+
+      input.value = "";
+      await loadCategories();
+      await load(currentFilter);
+    }
+
+    async function deleteCategory(encodedName) {
+      const name = decodeURIComponent(encodedName);
+
+      const response = await fetch(`${API}/categories/${encodeURIComponent(name)}`, {
+        method: "DELETE"
+      });
+
+      const result = await response.json();
+
+      if (result.message && result.message.includes("nie można usunąć")) {
+        alert(result.message);
+      }
+
+      await loadCategories();
+      await load(currentFilter);
+    }
+
+    async function load(category = currentFilter) {
+      currentFilter = category;
+
+      let url = `${API}/expenses`;
+
+      if (category) {
+        url = `${API}/expenses/by_category?category=${encodeURIComponent(category)}`;
+      }
+
+      const res = await fetch(url);
+      const data = await res.json();
+      const expenses = Array.isArray(data) ? data : data.expenses;
+
+      const list = document.getElementById("list");
       list.innerHTML = "";
 
-      if (!Array.isArray(expenses) || expenses.length === 0) {
-        list.innerHTML = '<div class="empty-text">Brak wydatków</div>';
+      if (!expenses || expenses.length === 0) {
+        list.innerHTML = `<div class="empty-state">Brak wydatków</div>`;
         return;
       }
 
-      expenses.forEach((expense, index) => {
+      expenses.forEach(e => {
+        const color = categoriesMap[e.category] || "#7c8798";
+
         const item = document.createElement("div");
         item.className = "expense-item";
 
-        const text = document.createElement("div");
-        text.className = "expense-text";
-        text.textContent = `${expense.date} | ${expense.category} | ${expense.description} | ${expense.amount} PLN`;
+        item.innerHTML = `
+          <div class="expense-main">
+            <div style="flex:1;">
+              <div class="expense-title">${e.description} — ${e.amount} PLN</div>
+              <div class="expense-meta">
+                <span>${e.date}</span>
+                <span>•</span>
+                <span class="chip" style="background:${color}">${e.category}</span>
+              </div>
 
-        const deleteButton = document.createElement("button");
-        deleteButton.className = "delete-button";
-        deleteButton.textContent = "❌";
-        deleteButton.type = "button";
+              <div class="edit-panel" id="edit-box-${e.id}">
+                <div class="form-grid">
+                  <div class="form-row">
+                    <div>
+                      <label class="field-label" for="edit-amount-${e.id}">Kwota</label>
+                      <input id="edit-amount-${e.id}" type="number" step="0.01" value="${e.amount}">
+                    </div>
+                    <div>
+                      <label class="field-label" for="edit-category-${e.id}">Kategoria</label>
+                      <select id="edit-category-${e.id}"></select>
+                    </div>
+                  </div>
 
-        deleteButton.addEventListener("click", async () => {
-          await deleteExpense(index);
-        });
+                  <div>
+                    <label class="field-label" for="edit-description-${e.id}">Opis</label>
+                    <input id="edit-description-${e.id}" value="${e.description}">
+                  </div>
 
-        item.appendChild(text);
-        item.appendChild(deleteButton);
+                  <div>
+                    <label class="field-label" for="edit-date-${e.id}">Data</label>
+                    <input id="edit-date-${e.id}" type="date" value="${e.date}">
+                  </div>
+
+                  <div class="button-row">
+                    <button type="button" class="button button-primary button-small" onclick="saveEdit(${e.id})">Zapisz</button>
+                    <button type="button" class="button button-secondary button-small" onclick="cancelEdit(${e.id})">Anuluj</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="expense-actions">
+              <button type="button" class="button button-secondary button-small" onclick="startEdit(${e.id})">Edytuj</button>
+              <button type="button" class="button button-danger button-small" onclick="del(${e.id})">Usuń</button>
+            </div>
+          </div>
+        `;
+
         list.appendChild(item);
+
+        const editCategorySelect = document.getElementById(`edit-category-${e.id}`);
+
+        Object.keys(categoriesMap).forEach(categoryName => {
+          const option = document.createElement("option");
+          option.value = categoryName;
+          option.textContent = categoryName;
+          if (categoryName === e.category) {
+            option.selected = true;
+          }
+          editCategorySelect.appendChild(option);
+        });
       });
     }
 
-    async function loadSummary() {
-      const category = document.getElementById("summary-category").value;
-      const year = document.getElementById("summary-year").value;
-      const month = document.getElementById("summary-month").value;
-
-      if (!category || !year || !month) {
-        document.getElementById("summary-category-value").textContent = "";
-        document.getElementById("summary-planned").textContent = "0 PLN";
-        document.getElementById("summary-spent").textContent = "0 PLN";
-        document.getElementById("summary-remaining").textContent = "0 PLN";
-        return;
-      }
-
-      const response = await fetch(
-        `${API_BASE}/budget-summary?category=${encodeURIComponent(category)}&year=${year}&month=${month}`
-      );
-      const summary = await response.json();
-
-      document.getElementById("summary-category-value").textContent = summary.category ?? "";
-      document.getElementById("summary-planned").textContent = `${summary.planned ?? 0} PLN`;
-      document.getElementById("summary-spent").textContent = `${summary.spent ?? 0} PLN`;
-
-      const remainingElement = document.getElementById("summary-remaining");
-      const remainingValue = summary.remaining ?? 0;
-
-      remainingElement.textContent = `${remainingValue} PLN`;
-
-      if (remainingValue < 0) {
-        remainingElement.style.color = "red";
-        remainingElement.style.fontWeight = "bold";
-      } else {
-        remainingElement.style.color = "green";
-        remainingElement.style.fontWeight = "bold";
-      }
+    function startEdit(id) {
+      document.getElementById(`edit-box-${id}`).classList.add("active");
     }
 
-    async function addExpense(event) {
-      event.preventDefault();
+    function cancelEdit(id) {
+      document.getElementById(`edit-box-${id}`).classList.remove("active");
+    }
 
-      const amountInput = document.getElementById("amount");
-      const categoryInput = document.getElementById("category");
-      const descriptionInput = document.getElementById("description");
-      const dateInput = document.getElementById("date");
-      const messageBox = document.getElementById("form-message");
+    async function saveEdit(id) {
+      const amount = parseFloat(document.getElementById(`edit-amount-${id}`).value);
+      const category = document.getElementById(`edit-category-${id}`).value;
+      const description = document.getElementById(`edit-description-${id}`).value;
+      const date = document.getElementById(`edit-date-${id}`).value;
 
-      const amount = parseFloat(amountInput.value);
-      const category = categoryInput.value;
-      const description = descriptionInput.value.trim();
-      const date = dateInput.value;
-
-      if (!amount || amount <= 0) {
-        messageBox.textContent = "Kwota musi być większa od 0.";
-        return;
-      }
-
-      if (!description) {
-        messageBox.textContent = "Opis nie może być pusty.";
-        return;
-      }
-
-      const response = await fetch(`${API_BASE}/expenses`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+      await fetch(`${API}/expenses/${id}`, {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
           amount,
           category,
@@ -319,79 +718,99 @@
         })
       });
 
-      const result = await response.json();
-      messageBox.textContent = result.message ?? "Coś poszło nie tak.";
-
-      amountInput.value = "";
-      descriptionInput.value = "";
-      setTodayDate();
-
-      await loadExpenses();
-      await loadSummary();
+      await load();
+      await loadMonthlySummary();
     }
 
-    async function addBudgetPlan(event) {
-      event.preventDefault();
+    function applyFilter() {
+      const value = document.getElementById("filter").value;
+      load(value);
+    }
 
-      const category = document.getElementById("plan-category").value;
-      const year = parseInt(document.getElementById("plan-year").value);
-      const month = parseInt(document.getElementById("plan-month").value);
-      const plannedAmount = parseFloat(document.getElementById("planned-amount").value);
-      const messageBox = document.getElementById("plan-message");
+    function clearFilter() {
+      document.getElementById("filter").value = "";
+      load("");
+    }
 
-      if (!plannedAmount || plannedAmount < 0) {
-        messageBox.textContent = "Planowana kwota musi być liczbą 0 lub większą.";
-        return;
-      }
+    async function del(id) {
+      await fetch(`${API}/expenses/${id}`, { method: "DELETE" });
+      await load();
+      await loadMonthlySummary();
+    }
 
-      const response = await fetch(`${API_BASE}/budget-plans`, {
+    document.getElementById("form").onsubmit = async (e) => {
+      e.preventDefault();
+
+      await fetch(`${API}/expenses`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
-          category,
-          year,
-          month,
-          planned_amount: plannedAmount
+          amount: parseFloat(amount.value),
+          category: category.value,
+          description: description.value,
+          date: date.value
         })
       });
 
-      const result = await response.json();
-      messageBox.textContent = result.message ?? "Coś poszło nie tak.";
+      document.getElementById("amount").value = "";
+      document.getElementById("description").value = "";
+      setToday();
 
-      await loadSummary();
-    }
+      document.getElementById("form-message").textContent = "Dodano wydatek.";
 
-    async function deleteExpense(index) {
-      const response = await fetch(`${API_BASE}/expenses/${index}`, {
-        method: "DELETE"
+      await load();
+      await loadMonthlySummary();
+    };
+
+    document.getElementById("limit-form").onsubmit = async (e) => {
+      e.preventDefault();
+
+      await fetch(`${API}/monthly-limit`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          year: parseInt(document.getElementById("limit-year").value),
+          month: parseInt(document.getElementById("limit-month").value),
+          limit_amount: parseFloat(document.getElementById("limit-amount").value)
+        })
       });
 
-      const result = await response.json();
-      document.getElementById("form-message").textContent = result.message ?? "";
+      await loadMonthlySummary();
+    };
 
-      await loadExpenses();
-      await loadSummary();
+    async function loadMonthlySummary() {
+      const year = parseInt(document.getElementById("limit-year").value);
+      const month = parseInt(document.getElementById("limit-month").value);
+
+      const res = await fetch(`${API}/monthly-summary?year=${year}&month=${month}`);
+      const data = await res.json();
+
+      document.getElementById("monthly-limit").textContent = `${data.limit} PLN`;
+      document.getElementById("monthly-spent").textContent = `${data.spent} PLN`;
+
+      const remainingEl = document.getElementById("monthly-remaining");
+      remainingEl.textContent = `${data.remaining} PLN`;
+      remainingEl.classList.remove("value-green", "value-red", "value-orange");
+
+      if (data.remaining > 0) {
+        remainingEl.classList.add("value-green");
+      } else if (data.remaining < 0) {
+        remainingEl.classList.add("value-red");
+      } else {
+        remainingEl.classList.add("value-orange");
+      }
+    }
+
+    function setToday() {
+      const d = new Date();
+      date.value = d.toISOString().split("T")[0];
     }
 
     async function init() {
       await loadCategories();
-      setTodayDate();
-      await loadExpenses();
-      await loadSummary();
-
-      document
-        .getElementById("expense-form")
-        .addEventListener("submit", addExpense);
-
-      document
-        .getElementById("budget-plan-form")
-        .addEventListener("submit", addBudgetPlan);
-
-      document
-        .getElementById("summary-button")
-        .addEventListener("click", loadSummary);
+      setToday();
+      await load();
+      await loadMonthlySummary();
     }
 
     init();

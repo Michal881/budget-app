@@ -1,24 +1,4 @@
 {
-  "expenses": [
-    {
-      "amount": 50.0,
-      "category": "jedzenie",
-      "description": "test",
-      "date": "2026-04-19"
-    },
-    {
-      "amount": 500.0,
-      "category": "rozrywka",
-      "description": "test",
-      "date": "2026-04-19"
-    },
-    {
-      "amount": 80.0,
-      "category": "barber",
-      "description": "test",
-      "date": "2026-04-19"
-    }
-  ],
   "budget_plans": [
     {
       "category": "jedzenie",
@@ -37,6 +17,30 @@
       "year": 2026,
       "month": 4,
       "planned_amount": 250.0
+    },
+    {
+      "category": "jedzenie",
+      "year": 2026,
+      "month": 4,
+      "planned_amount": 1000.0
+    },
+    {
+      "category": "jedzenie",
+      "year": 2026,
+      "month": 4,
+      "planned_amount": 1000.0
+    }
+  ],
+  "monthly_limits": [
+    {
+      "year": 2026,
+      "month": 5,
+      "limit_amount": 8000.0
+    },
+    {
+      "year": 2026,
+      "month": 4,
+      "limit_amount": 3000.0
     }
   ]
 }
