@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Budget App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f7f7f7;
+      color: #222;
+    }
+
+    h1, h2 {
+      margin-top: 0;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    ul {
+      padding-left: 20px;
+      margin: 0;
+    }
+
+    .summary-row {
+      margin: 8px 0;
+      font-size: 18px;
+    }
+
+    .label {
+      font-weight: bold;
+    }
+
+    form {
+      display: grid;
+      gap: 12px;
+      max-width: 500px;
+    }
+
+    .summary-form {
+      display: grid;
+      gap: 12px;
+      max-width: 500px;
+      margin-bottom: 20px;
+    }
+
+    input, select, button {
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #111827;
+      color: white;
+      cursor: pointer;
+      border: none;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .message {
+      margin-top: 10px;
+      font-weight: bold;
+      min-height: 24px;
+    }
+
+    .expense-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      padding: 10px 12px;
+      background: #fafafa;
+      border-radius: 8px;
+    }
+
+    .expense-text {
+      flex: 1;
+    }
+
+    .delete-button {
+      background: #b91c1c;
+      padding: 6px 10px;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .empty-text {
+      color: #666;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h1>Budget App</h1>
+
+  <div class="card">
+    <h2>Dodaj wydatek</h2>
+    <form id="expense-form">
+      <input type="number" id="amount" placeholder="Kwota" step="0.01" required />
+      <select id="category" required></select>
+      <input type="text" id="description" placeholder="Opis" required />
+      <input type="date" id="date" required />
+      <button type="submit">Dodaj wydatek</button>
+    </form>
+    <div class="message" id="form-message"></div>
+  </div>
+
+  <div class="card">
+    <h2>Dodaj plan budżetu</h2>
+    <form id="budget-plan-form">
+      <select id="plan-category" required></select>
+      <input type="number" id="plan-year" placeholder="Rok" value="2026" required />
+      <input type="number" id="plan-month" placeholder="Miesiąc" value="4" min="1" max="12" required />
+      <input type="number" id="planned-amount" placeholder="Planowana kwota" step="0.01" required />
+      <button type="submit">Dodaj plan budżetu</button>
+    </form>
+    <div class="message" id="plan-message"></div>
+  </div>
+
+  <div class="card">
+    <h2>Kategorie</h2>
+    <ul id="categories-list"></ul>
+  </div>
+
+  <div class="card">
+    <h2>Wydatki</h2>
+    <div id="expenses-list"></div>
+  </div>
+
+  <div class="card">
+    <h2>Podsumowanie budżetu</h2>
+
+    <div class="summary-form">
+      <select id="summary-category"></select>
+      <input type="number" id="summary-year" placeholder="Rok" value="2026" />
+      <input type="number" id="summary-month" placeholder="Miesiąc" value="4" min="1" max="12" />
+      <button id="summary-button" type="button">Pokaż podsumowanie</button>
+    </div>
+
+    <div class="summary-row"><span class="label">Kategoria:</span> <span id="summary-category-value"></span></div>
+    <div class="summary-row"><span class="label">Plan:</span> <span id="summary-planned"></span></div>
+    <div class="summary-row"><span class="label">Wydane:</span> <span id="summary-spent"></span></div>
+    <div class="summary-row"><span class="label">Zostało:</span> <span id="summary-remaining"></span></div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8001";
+
+    function setTodayDate() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+      const day = String(today.getDate()).padStart(2, "0");
+      document.getElementById("date").value = `${year}-${month}-${day}`;
+    }
+
+    async function loadCategories() {
+      const response = await fetch(`${API_BASE}/categories`);
+      const categories = await response.json();
+
+      const categoriesList = document.getElementById("categories-list");
+      const expenseSelect = document.getElementById("category");
+      const summarySelect = document.getElementById("summary-category");
+      const planSelect = document.getElementById("plan-category");
+
+      categoriesList.innerHTML = "";
+      expenseSelect.innerHTML = "";
+      summarySelect.innerHTML = "";
+      planSelect.innerHTML = "";
+
+      if (!Array.isArray(categories) || categories.length === 0) {
+        categoriesList.innerHTML = '<li class="empty-text">Brak kategorii</li>';
+        return;
+      }
+
+      categories.forEach(category => {
+        const li = document.createElement("li");
+        li.textContent = category;
+        categoriesList.appendChild(li);
+
+        const option1 = document.createElement("option");
+        option1.value = category;
+        option1.textContent = category;
+        expenseSelect.appendChild(option1);
+
+        const option2 = document.createElement("option");
+        option2.value = category;
+        option2.textContent = category;
+        summarySelect.appendChild(option2);
+
+        const option3 = document.createElement("option");
+        option3.value = category;
+        option3.textContent = category;
+        planSelect.appendChild(option3);
+      });
+    }
+
+    async function loadExpenses() {
+      const response = await fetch(`${API_BASE}/expenses`);
+      const expenses = await response.json();
+
+      const list = document.getElementById("expenses-list");
+      list.innerHTML = "";
+
+      if (!Array.isArray(expenses) || expenses.length === 0) {
+        list.innerHTML = '<div class="empty-text">Brak wydatków</div>';
+        return;
+      }
+
+      expenses.forEach((expense, index) => {
+        const item = document.createElement("div");
+        item.className = "expense-item";
+
+        const text = document.createElement("div");
+        text.className = "expense-text";
+        text.textContent = `${expense.date} | ${expense.category} | ${expense.description} | ${expense.amount} PLN`;
+
+        const deleteButton = document.createElement("button");
+        deleteButton.className = "delete-button";
+        deleteButton.textContent = "❌";
+        deleteButton.type = "button";
+
+        deleteButton.addEventListener("click", async () => {
+          await deleteExpense(index);
+        });
+
+        item.appendChild(text);
+        item.appendChild(deleteButton);
+        list.appendChild(item);
+      });
+    }
+
+    async function loadSummary() {
+      const category = document.getElementById("summary-category").value;
+      const year = document.getElementById("summary-year").value;
+      const month = document.getElementById("summary-month").value;
+
+      if (!category || !year || !month) {
+        document.getElementById("summary-category-value").textContent = "";
+        document.getElementById("summary-planned").textContent = "0 PLN";
+        document.getElementById("summary-spent").textContent = "0 PLN";
+        document.getElementById("summary-remaining").textContent = "0 PLN";
+        return;
+      }
+
+      const response = await fetch(
+        `${API_BASE}/budget-summary?category=${encodeURIComponent(category)}&year=${year}&month=${month}`
+      );
+      const summary = await response.json();
+
+      document.getElementById("summary-category-value").textContent = summary.category ?? "";
+      document.getElementById("summary-planned").textContent = `${summary.planned ?? 0} PLN`;
+      document.getElementById("summary-spent").textContent = `${summary.spent ?? 0} PLN`;
+
+      const remainingElement = document.getElementById("summary-remaining");
+      const remainingValue = summary.remaining ?? 0;
+
+      remainingElement.textContent = `${remainingValue} PLN`;
+
+      if (remainingValue < 0) {
+        remainingElement.style.color = "red";
+        remainingElement.style.fontWeight = "bold";
+      } else {
+        remainingElement.style.color = "green";
+        remainingElement.style.fontWeight = "bold";
+      }
+    }
+
+    async function addExpense(event) {
+      event.preventDefault();
+
+      const amountInput = document.getElementById("amount");
+      const categoryInput = document.getElementById("category");
+      const descriptionInput = document.getElementById("description");
+      const dateInput = document.getElementById("date");
+      const messageBox = document.getElementById("form-message");
+
+      const amount = parseFloat(amountInput.value);
+      const category = categoryInput.value;
+      const description = descriptionInput.value.trim();
+      const date = dateInput.value;
+
+      if (!amount || amount <= 0) {
+        messageBox.textContent = "Kwota musi być większa od 0.";
+        return;
+      }
+
+      if (!description) {
+        messageBox.textContent = "Opis nie może być pusty.";
+        return;
+      }
+
+      const response = await fetch(`${API_BASE}/expenses`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          amount,
+          category,
+          description,
+          date
+        })
+      });
+
+      const result = await response.json();
+      messageBox.textContent = result.message ?? "Coś poszło nie tak.";
+
+      amountInput.value = "";
+      descriptionInput.value = "";
+      setTodayDate();
+
+      await loadExpenses();
+      await loadSummary();
+    }
+
+    async function addBudgetPlan(event) {
+      event.preventDefault();
+
+      const category = document.getElementById("plan-category").value;
+      const year = parseInt(document.getElementById("plan-year").value);
+      const month = parseInt(document.getElementById("plan-month").value);
+      const plannedAmount = parseFloat(document.getElementById("planned-amount").value);
+      const messageBox = document.getElementById("plan-message");
+
+      if (!plannedAmount || plannedAmount < 0) {
+        messageBox.textContent = "Planowana kwota musi być liczbą 0 lub większą.";
+        return;
+      }
+
+      const response = await fetch(`${API_BASE}/budget-plans`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          category,
+          year,
+          month,
+          planned_amount: plannedAmount
+        })
+      });
+
+      const result = await response.json();
+      messageBox.textContent = result.message ?? "Coś poszło nie tak.";
+
+      await loadSummary();
+    }
+
+    async function deleteExpense(index) {
+      const response = await fetch(`${API_BASE}/expenses/${index}`, {
+        method: "DELETE"
+      });
+
+      const result = await response.json();
+      document.getElementById("form-message").textContent = result.message ?? "";
+
+      await loadExpenses();
+      await loadSummary();
+    }
+
+    async function init() {
+      await loadCategories();
+      setTodayDate();
+      await loadExpenses();
+      await loadSummary();
+
+      document
+        .getElementById("expense-form")
+        .addEventListener("submit", addExpense);
+
+      document
+        .getElementById("budget-plan-form")
+        .addEventListener("submit", addBudgetPlan);
+
+      document
+        .getElementById("summary-button")
+        .addEventListener("click", loadSummary);
+    }
+
+    init();
+  </script>
+</body>
+</html>
