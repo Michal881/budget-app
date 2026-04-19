@@ -389,7 +389,7 @@
           Lekki, uporządkowany pulpit do zarządzania wydatkami, kategoriami, kolorami i limitem miesięcznym.
         </p>
       </div>
-      <div class="topbar-badge">Local app · SQLite</div>
+      <div class="topbar-badge">Live app · Render</div>
     </div>
 
     <div class="dashboard-grid grid-2">
@@ -525,7 +525,7 @@
   </div>
 
   <script>
-    const API = "http://127.0.0.1:8000";
+    const API = window.location.origin;
     let currentFilter = "";
     let categoriesMap = {};
 
