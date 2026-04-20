@@ -25,14 +25,14 @@ DATA_FILE = "data.json"
 
 
 class ExpenseCreate(BaseModel):
-    amount: float = Field(ge=0)
+    amount: float
     category: str
     description: str
     date: date
 
 
 class ExpenseUpdate(BaseModel):
-    amount: float = Field(ge=0)
+    amount: float
     category: str
     description: str
     date: date
@@ -59,6 +59,7 @@ class MonthlyLimit(BaseModel):
 budget_plans = []
 monthly_limits = []
 HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
+MAX_EXPENSE_AMOUNT = 1_000_000
 
 
 def validate_non_empty_text(value: str, field_name: str) -> str:
@@ -72,6 +73,17 @@ def validate_hex_color(value: str) -> str:
     if not HEX_COLOR_RE.fullmatch(value):
         raise HTTPException(status_code=400, detail="kolor musi mieć format #RRGGBB")
     return value.lower()
+
+
+def validate_amount(value: float) -> float:
+    if value <= 0:
+        raise HTTPException(status_code=400, detail="kwota musi być większa od 0")
+    if value > MAX_EXPENSE_AMOUNT:
+        raise HTTPException(
+            status_code=400,
+            detail=f"kwota jest za duża (maksymalnie {MAX_EXPENSE_AMOUNT} PLN)"
+        )
+    return value
 
 
 def save_data():
@@ -261,18 +273,20 @@ def delete_category(category_name: str):
 @app.post("/expenses")
 def add_expense(expense: ExpenseCreate):
     clean_description = validate_non_empty_text(expense.description, "opis")
+    clean_category = validate_non_empty_text(expense.category, "kategoria")
+    valid_amount = validate_amount(expense.amount)
 
     db = SessionLocal()
     try:
-        category_exists = db.query(CategoryDB).filter(CategoryDB.name == expense.category).first()
+        category_exists = db.query(CategoryDB).filter(CategoryDB.name == clean_category).first()
         if not category_exists:
             raise HTTPException(status_code=400, detail="kategoria nie istnieje")
 
         new_expense = ExpenseDB(
             description=clean_description,
-            amount=expense.amount,
+            amount=valid_amount,
             date=expense.date.isoformat(),
-            category=expense.category
+            category=clean_category
         )
 
         db.add(new_expense)
@@ -339,10 +353,12 @@ def get_expenses_by_category(category: str):
 @app.put("/expenses/{expense_id}")
 def update_expense(expense_id: int, expense_update: ExpenseUpdate):
     clean_description = validate_non_empty_text(expense_update.description, "opis")
+    clean_category = validate_non_empty_text(expense_update.category, "kategoria")
+    valid_amount = validate_amount(expense_update.amount)
 
     db = SessionLocal()
     try:
-        category_exists = db.query(CategoryDB).filter(CategoryDB.name == expense_update.category).first()
+        category_exists = db.query(CategoryDB).filter(CategoryDB.name == clean_category).first()
         if not category_exists:
             raise HTTPException(status_code=400, detail="kategoria nie istnieje")
 
@@ -352,9 +368,9 @@ def update_expense(expense_id: int, expense_update: ExpenseUpdate):
             raise HTTPException(status_code=404, detail="nie znaleziono wydatku")
 
         expense.description = clean_description
-        expense.amount = expense_update.amount
+        expense.amount = valid_amount
         expense.date = expense_update.date.isoformat()
-        expense.category = expense_update.category
+        expense.category = clean_category
 
         db.commit()
         db.refresh(expense)

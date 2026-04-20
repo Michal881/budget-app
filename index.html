@@ -224,6 +224,14 @@
       font-size: 13px;
     }
 
+    .helper-text-error {
+      color: var(--danger);
+    }
+
+    .helper-text-success {
+      color: var(--success);
+    }
+
     .stats-grid {
       display: grid;
       gap: 14px;
@@ -392,6 +400,8 @@
       <div class="topbar-badge">Live app · Render</div>
     </div>
 
+    <div id="app-message" class="helper-text"></div>
+
     <div class="dashboard-grid grid-2">
       <section class="card">
         <div class="card-header">
@@ -402,7 +412,7 @@
         <form id="form" class="form-grid">
           <div>
             <label class="field-label" for="amount">Kwota</label>
-            <input id="amount" type="number" step="0.01" placeholder="np. 42.50" required />
+            <input id="amount" type="number" step="0.01" min="0.01" max="1000000" placeholder="np. 42.50" required />
           </div>
 
           <div>
@@ -526,8 +536,34 @@
 
   <script>
     const API = window.location.origin;
+    const MAX_EXPENSE_AMOUNT = 1000000;
     let currentFilter = "";
     let categoriesMap = {};
+
+    function showAppMessage(message, type = "error") {
+      const messageEl = document.getElementById("app-message");
+      messageEl.textContent = message;
+      messageEl.classList.remove("helper-text-error", "helper-text-success");
+      messageEl.classList.add(type === "success" ? "helper-text-success" : "helper-text-error");
+    }
+
+    function clearAppMessage() {
+      const messageEl = document.getElementById("app-message");
+      messageEl.textContent = "";
+      messageEl.classList.remove("helper-text-error", "helper-text-success");
+    }
+
+    function validateAmountInput(rawAmount) {
+      if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
+        throw new Error("Kwota musi być większa od 0.");
+      }
+
+      if (rawAmount > MAX_EXPENSE_AMOUNT) {
+        throw new Error(`Kwota jest za duża. Maksymalnie ${MAX_EXPENSE_AMOUNT} PLN.`);
+      }
+
+      return rawAmount;
+    }
 
     async function parseResponse(response) {
       let data = {};
@@ -546,9 +582,20 @@
       return data;
     }
 
+    async function apiFetch(url, options = {}) {
+      try {
+        const response = await fetch(url, options);
+        return await parseResponse(response);
+      } catch (error) {
+        if (error instanceof TypeError) {
+          throw new Error("Brak połączenia z serwerem. Spróbuj ponownie.");
+        }
+        throw error;
+      }
+    }
+
     async function loadCategories() {
-      const res = await fetch(`${API}/categories`);
-      const data = await parseResponse(res);
+      const data = await apiFetch(`${API}/categories`);
 
       const select = document.getElementById("category");
       const filter = document.getElementById("filter");
@@ -592,17 +639,19 @@
       if (!name) return;
 
       try {
-        await parseResponse(await fetch(`${API}/categories`, {
+        clearAppMessage();
+        await apiFetch(`${API}/categories`, {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({ name, color })
-        }));
+        });
 
         input.value = "";
         await loadCategories();
         await load(currentFilter);
+        showAppMessage("Dodano kategorię.", "success");
       } catch (error) {
-        alert(error.message);
+        showAppMessage(error.message);
       }
     }
 
@@ -610,11 +659,13 @@
       const name = decodeURIComponent(encodedName);
 
       try {
-        await parseResponse(await fetch(`${API}/categories/${encodeURIComponent(name)}`, {
+        clearAppMessage();
+        await apiFetch(`${API}/categories/${encodeURIComponent(name)}`, {
           method: "DELETE"
-        }));
+        });
+        showAppMessage("Usunięto kategorię.", "success");
       } catch (error) {
-        alert(error.message);
+        showAppMessage(error.message);
       }
 
       await loadCategories();
@@ -630,8 +681,7 @@
         url = `${API}/expenses/by_category?category=${encodeURIComponent(category)}`;
       }
 
-      const res = await fetch(url);
-      const data = await parseResponse(res);
+      const data = await apiFetch(url);
       const expenses = Array.isArray(data) ? data : data.expenses;
 
       const list = document.getElementById("list");
@@ -663,7 +713,7 @@
                   <div class="form-row">
                     <div>
                       <label class="field-label" for="edit-amount-${e.id}">Kwota</label>
-                      <input id="edit-amount-${e.id}" type="number" step="0.01" value="${e.amount}">
+                      <input id="edit-amount-${e.id}" type="number" step="0.01" min="0.01" max="1000000" value="${e.amount}">
                     </div>
                     <div>
                       <label class="field-label" for="edit-category-${e.id}">Kategoria</label>
@@ -727,21 +777,23 @@
       const date = document.getElementById(`edit-date-${id}`).value;
 
       try {
-        await parseResponse(await fetch(`${API}/expenses/${id}`, {
+        clearAppMessage();
+        await apiFetch(`${API}/expenses/${id}`, {
           method: "PUT",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({
-            amount,
+            amount: validateAmountInput(amount),
             category,
             description,
             date
           })
-        }));
+        });
 
         await load();
         await loadMonthlySummary();
+        showAppMessage("Zaktualizowano wydatek.", "success");
       } catch (error) {
-        alert(error.message);
+        showAppMessage(error.message);
       }
     }
 
@@ -757,11 +809,13 @@
 
     async function del(id) {
       try {
-        await parseResponse(await fetch(`${API}/expenses/${id}`, { method: "DELETE" }));
+        clearAppMessage();
+        await apiFetch(`${API}/expenses/${id}`, { method: "DELETE" });
         await load();
         await loadMonthlySummary();
+        showAppMessage("Usunięto wydatek.", "success");
       } catch (error) {
-        alert(error.message);
+        showAppMessage(error.message);
       }
     }
 
@@ -771,26 +825,29 @@
       messageEl.textContent = "";
 
       try {
-        await parseResponse(await fetch(`${API}/expenses`, {
+        clearAppMessage();
+        await apiFetch(`${API}/expenses`, {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({
-            amount: parseFloat(amount.value),
+            amount: validateAmountInput(parseFloat(amount.value)),
             category: category.value,
             description: description.value,
             date: date.value
           })
-        }));
+        });
 
         document.getElementById("amount").value = "";
         document.getElementById("description").value = "";
         setToday();
 
         messageEl.textContent = "Dodano wydatek.";
+        showAppMessage("Dodano wydatek.", "success");
         await load();
         await loadMonthlySummary();
       } catch (error) {
         messageEl.textContent = `Błąd: ${error.message}`;
+        showAppMessage(error.message);
       }
 
     };
@@ -799,7 +856,8 @@
       e.preventDefault();
 
       try {
-        await parseResponse(await fetch(`${API}/monthly-limit`, {
+        clearAppMessage();
+        await apiFetch(`${API}/monthly-limit`, {
           method: "POST",
           headers: {"Content-Type": "application/json"},
           body: JSON.stringify({
@@ -807,11 +865,12 @@
             month: parseInt(document.getElementById("limit-month").value),
             limit_amount: parseFloat(document.getElementById("limit-amount").value)
           })
-        }));
+        });
 
         await loadMonthlySummary();
+        showAppMessage("Zapisano limit miesięczny.", "success");
       } catch (error) {
-        alert(error.message);
+        showAppMessage(error.message);
       }
     };
 
@@ -819,8 +878,7 @@
       const year = parseInt(document.getElementById("limit-year").value);
       const month = parseInt(document.getElementById("limit-month").value);
 
-      const res = await fetch(`${API}/monthly-summary?year=${year}&month=${month}`);
-      const data = await parseResponse(res);
+      const data = await apiFetch(`${API}/monthly-summary?year=${year}&month=${month}`);
 
       document.getElementById("monthly-limit").textContent = `${data.limit} PLN`;
       document.getElementById("monthly-spent").textContent = `${data.spent} PLN`;
@@ -844,10 +902,15 @@
     }
 
     async function init() {
-      await loadCategories();
-      setToday();
-      await load();
-      await loadMonthlySummary();
+      try {
+        clearAppMessage();
+        await loadCategories();
+        setToday();
+        await load();
+        await loadMonthlySummary();
+      } catch (error) {
+        showAppMessage(error.message);
+      }
     }
 
     init();
