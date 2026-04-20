@@ -529,9 +529,26 @@
     let currentFilter = "";
     let categoriesMap = {};
 
+    async function parseResponse(response) {
+      let data = {};
+
+      try {
+        data = await response.json();
+      } catch (_) {
+        data = {};
+      }
+
+      if (!response.ok) {
+        const message = data.detail || data.message || "Wystąpił błąd serwera";
+        throw new Error(message);
+      }
+
+      return data;
+    }
+
     async function loadCategories() {
       const res = await fetch(`${API}/categories`);
-      const data = await res.json();
+      const data = await parseResponse(res);
 
       const select = document.getElementById("category");
       const filter = document.getElementById("filter");
@@ -574,28 +591,30 @@
 
       if (!name) return;
 
-      await fetch(`${API}/categories`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ name, color })
-      });
+      try {
+        await parseResponse(await fetch(`${API}/categories`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({ name, color })
+        }));
 
-      input.value = "";
-      await loadCategories();
-      await load(currentFilter);
+        input.value = "";
+        await loadCategories();
+        await load(currentFilter);
+      } catch (error) {
+        alert(error.message);
+      }
     }
 
     async function deleteCategory(encodedName) {
       const name = decodeURIComponent(encodedName);
 
-      const response = await fetch(`${API}/categories/${encodeURIComponent(name)}`, {
-        method: "DELETE"
-      });
-
-      const result = await response.json();
-
-      if (result.message && result.message.includes("nie można usunąć")) {
-        alert(result.message);
+      try {
+        await parseResponse(await fetch(`${API}/categories/${encodeURIComponent(name)}`, {
+          method: "DELETE"
+        }));
+      } catch (error) {
+        alert(error.message);
       }
 
       await loadCategories();
@@ -612,7 +631,7 @@
       }
 
       const res = await fetch(url);
-      const data = await res.json();
+      const data = await parseResponse(res);
       const expenses = Array.isArray(data) ? data : data.expenses;
 
       const list = document.getElementById("list");
@@ -707,19 +726,23 @@
       const description = document.getElementById(`edit-description-${id}`).value;
       const date = document.getElementById(`edit-date-${id}`).value;
 
-      await fetch(`${API}/expenses/${id}`, {
-        method: "PUT",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          amount,
-          category,
-          description,
-          date
-        })
-      });
+      try {
+        await parseResponse(await fetch(`${API}/expenses/${id}`, {
+          method: "PUT",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            amount,
+            category,
+            description,
+            date
+          })
+        }));
 
-      await load();
-      await loadMonthlySummary();
+        await load();
+        await loadMonthlySummary();
+      } catch (error) {
+        alert(error.message);
+      }
     }
 
     function applyFilter() {
@@ -733,49 +756,63 @@
     }
 
     async function del(id) {
-      await fetch(`${API}/expenses/${id}`, { method: "DELETE" });
-      await load();
-      await loadMonthlySummary();
+      try {
+        await parseResponse(await fetch(`${API}/expenses/${id}`, { method: "DELETE" }));
+        await load();
+        await loadMonthlySummary();
+      } catch (error) {
+        alert(error.message);
+      }
     }
 
     document.getElementById("form").onsubmit = async (e) => {
       e.preventDefault();
+      const messageEl = document.getElementById("form-message");
+      messageEl.textContent = "";
 
-      await fetch(`${API}/expenses`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          amount: parseFloat(amount.value),
-          category: category.value,
-          description: description.value,
-          date: date.value
-        })
-      });
+      try {
+        await parseResponse(await fetch(`${API}/expenses`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            amount: parseFloat(amount.value),
+            category: category.value,
+            description: description.value,
+            date: date.value
+          })
+        }));
 
-      document.getElementById("amount").value = "";
-      document.getElementById("description").value = "";
-      setToday();
+        document.getElementById("amount").value = "";
+        document.getElementById("description").value = "";
+        setToday();
 
-      document.getElementById("form-message").textContent = "Dodano wydatek.";
+        messageEl.textContent = "Dodano wydatek.";
+        await load();
+        await loadMonthlySummary();
+      } catch (error) {
+        messageEl.textContent = `Błąd: ${error.message}`;
+      }
 
-      await load();
-      await loadMonthlySummary();
     };
 
     document.getElementById("limit-form").onsubmit = async (e) => {
       e.preventDefault();
 
-      await fetch(`${API}/monthly-limit`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          year: parseInt(document.getElementById("limit-year").value),
-          month: parseInt(document.getElementById("limit-month").value),
-          limit_amount: parseFloat(document.getElementById("limit-amount").value)
-        })
-      });
+      try {
+        await parseResponse(await fetch(`${API}/monthly-limit`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            year: parseInt(document.getElementById("limit-year").value),
+            month: parseInt(document.getElementById("limit-month").value),
+            limit_amount: parseFloat(document.getElementById("limit-amount").value)
+          })
+        }));
 
-      await loadMonthlySummary();
+        await loadMonthlySummary();
+      } catch (error) {
+        alert(error.message);
+      }
     };
 
     async function loadMonthlySummary() {
@@ -783,7 +820,7 @@
       const month = parseInt(document.getElementById("limit-month").value);
 
       const res = await fetch(`${API}/monthly-summary?year=${year}&month=${month}`);
-      const data = await res.json();
+      const data = await parseResponse(res);
 
       document.getElementById("monthly-limit").textContent = `${data.limit} PLN`;
       document.getElementById("monthly-spent").textContent = `${data.spent} PLN`;

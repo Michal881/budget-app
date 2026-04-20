@@ -2,12 +2,14 @@ from database import SessionLocal
 from models import Expense as ExpenseDB
 from models import Category as CategoryDB
 from fastapi import FastAPI
+from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import date
 import json
 import os
+import re
 
 app = FastAPI()
 
@@ -23,14 +25,14 @@ DATA_FILE = "data.json"
 
 
 class ExpenseCreate(BaseModel):
-    amount: float
+    amount: float = Field(ge=0)
     category: str
     description: str
     date: date
 
 
 class ExpenseUpdate(BaseModel):
-    amount: float
+    amount: float = Field(ge=0)
     category: str
     description: str
     date: date
@@ -51,11 +53,25 @@ class BudgetPlan(BaseModel):
 class MonthlyLimit(BaseModel):
     year: int
     month: int
-    limit_amount: float
+    limit_amount: float = Field(ge=0)
 
 
 budget_plans = []
 monthly_limits = []
+HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
+
+
+def validate_non_empty_text(value: str, field_name: str) -> str:
+    clean_value = value.strip()
+    if not clean_value:
+        raise HTTPException(status_code=400, detail=f"{field_name} nie może być puste")
+    return clean_value
+
+
+def validate_hex_color(value: str) -> str:
+    if not HEX_COLOR_RE.fullmatch(value):
+        raise HTTPException(status_code=400, detail="kolor musi mieć format #RRGGBB")
+    return value.lower()
 
 
 def save_data():
@@ -190,18 +206,16 @@ def get_categories():
 
 @app.post("/categories")
 def add_category(category: CategoryCreate):
-    clean_name = category.name.strip()
-
-    if not clean_name:
-        return {"message": "nazwa kategorii nie może być pusta"}
+    clean_name = validate_non_empty_text(category.name, "nazwa kategorii")
+    clean_color = validate_hex_color(category.color)
 
     db = SessionLocal()
     try:
         existing = db.query(CategoryDB).filter(CategoryDB.name == clean_name).first()
         if existing:
-            return {"message": "kategoria już istnieje"}
+            raise HTTPException(status_code=409, detail="kategoria już istnieje")
 
-        new_category = CategoryDB(name=clean_name, color=category.color)
+        new_category = CategoryDB(name=clean_name, color=clean_color)
         db.add(new_category)
         db.commit()
         db.refresh(new_category)
@@ -220,16 +234,21 @@ def add_category(category: CategoryCreate):
 
 @app.delete("/categories/{category_name}")
 def delete_category(category_name: str):
+    clean_name = validate_non_empty_text(category_name, "nazwa kategorii")
+
     db = SessionLocal()
     try:
-        category = db.query(CategoryDB).filter(CategoryDB.name == category_name).first()
+        category = db.query(CategoryDB).filter(CategoryDB.name == clean_name).first()
 
         if not category:
-            return {"message": "nie znaleziono kategorii"}
+            raise HTTPException(status_code=404, detail="nie znaleziono kategorii")
 
-        has_expenses = db.query(ExpenseDB).filter(ExpenseDB.category == category_name).first()
+        has_expenses = db.query(ExpenseDB).filter(ExpenseDB.category == clean_name).first()
         if has_expenses:
-            return {"message": "nie można usunąć kategorii, bo są do niej przypisane wydatki"}
+            raise HTTPException(
+                status_code=409,
+                detail="nie można usunąć kategorii, bo są do niej przypisane wydatki"
+            )
 
         db.delete(category)
         db.commit()
@@ -241,14 +260,16 @@ def delete_category(category_name: str):
 
 @app.post("/expenses")
 def add_expense(expense: ExpenseCreate):
+    clean_description = validate_non_empty_text(expense.description, "opis")
+
     db = SessionLocal()
     try:
         category_exists = db.query(CategoryDB).filter(CategoryDB.name == expense.category).first()
         if not category_exists:
-            return {"message": "kategoria nie istnieje"}
+            raise HTTPException(status_code=400, detail="kategoria nie istnieje")
 
         new_expense = ExpenseDB(
-            description=expense.description,
+            description=clean_description,
             amount=expense.amount,
             date=expense.date.isoformat(),
             category=expense.category
@@ -317,18 +338,20 @@ def get_expenses_by_category(category: str):
 
 @app.put("/expenses/{expense_id}")
 def update_expense(expense_id: int, expense_update: ExpenseUpdate):
+    clean_description = validate_non_empty_text(expense_update.description, "opis")
+
     db = SessionLocal()
     try:
         category_exists = db.query(CategoryDB).filter(CategoryDB.name == expense_update.category).first()
         if not category_exists:
-            return {"message": "kategoria nie istnieje"}
+            raise HTTPException(status_code=400, detail="kategoria nie istnieje")
 
         expense = db.query(ExpenseDB).filter(ExpenseDB.id == expense_id).first()
 
         if not expense:
-            return {"message": "nie znaleziono wydatku"}
+            raise HTTPException(status_code=404, detail="nie znaleziono wydatku")
 
-        expense.description = expense_update.description
+        expense.description = clean_description
         expense.amount = expense_update.amount
         expense.date = expense_update.date.isoformat()
         expense.category = expense_update.category
@@ -357,7 +380,7 @@ def delete_expense(expense_id: int):
         expense = db.query(ExpenseDB).filter(ExpenseDB.id == expense_id).first()
 
         if not expense:
-            return {"message": "nie znaleziono wydatku"}
+            raise HTTPException(status_code=404, detail="nie znaleziono wydatku")
 
         db.delete(expense)
         db.commit()
@@ -401,13 +424,12 @@ def add_budget_plan(plan: BudgetPlan):
     try:
         category_exists = db.query(CategoryDB).filter(CategoryDB.name == plan.category).first()
         if not category_exists:
-            return {"message": "kategoria nie istnieje"}
+            raise HTTPException(status_code=400, detail="kategoria nie istnieje")
 
         if plan.month < 1 or plan.month > 12:
-            return {"message": "nieprawidłowy miesiąc"}
-
+            raise HTTPException(status_code=400, detail="nieprawidłowy miesiąc")
         if plan.planned_amount < 0:
-            return {"message": "planowana kwota nie może być ujemna"}
+            raise HTTPException(status_code=400, detail="planowana kwota nie może być ujemna")
 
         budget_plans.append(plan)
         save_data()
@@ -464,10 +486,7 @@ def get_budget_summary(category: str, year: int, month: int):
 @app.post("/monthly-limit")
 def set_monthly_limit(limit: MonthlyLimit):
     if limit.month < 1 or limit.month > 12:
-        return {"message": "nieprawidłowy miesiąc"}
-
-    if limit.limit_amount < 0:
-        return {"message": "limit nie może być ujemny"}
+        raise HTTPException(status_code=400, detail="nieprawidłowy miesiąc")
 
     global monthly_limits
 
