@@ -25,14 +25,14 @@ DATA_FILE = "data.json"
 
 
 class ExpenseCreate(BaseModel):
-    amount: float = Field(ge=0)
+    amount: float = Field(gt=0, le=1_000_000)
     category: str
     description: str
     date: date
 
 
 class ExpenseUpdate(BaseModel):
-    amount: float = Field(ge=0)
+    amount: float = Field(gt=0, le=1_000_000)
     category: str
     description: str
     date: date
