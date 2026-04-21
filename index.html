@@ -195,11 +195,6 @@
       box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.12);
     }
 
-    input[type="color"] {
-      padding: 6px;
-      min-height: 46px;
-    }
-
     .button {
       min-height: 44px;
       border: none;
@@ -397,8 +392,8 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      background: var(--surface-soft);
-      border: 1px solid var(--border);
+      background: var(--category-tint, var(--surface-soft));
+      border: 1px solid var(--category-border, var(--border));
       border-radius: var(--radius-sm);
       padding: 14px;
     }
@@ -422,8 +417,8 @@
     }
 
     .expense-item {
-      background: var(--surface-soft);
-      border: 1px solid var(--border);
+      background: var(--category-tint, var(--surface-soft));
+      border: 1px solid var(--category-border, var(--border));
       border-radius: var(--radius);
       padding: var(--space-4);
       display: grid;
@@ -566,7 +561,7 @@
       <div>
         <h1 class="page-title">Budget App</h1>
         <p class="page-subtitle">
-          Lekki, uporządkowany pulpit do zarządzania wydatkami, kategoriami, kolorami i limitem miesięcznym.
+          Lekki, uporządkowany pulpit do zarządzania wydatkami, kategoriami i limitem miesięcznym.
         </p>
       </div>
       <div class="topbar-badge">Live app · Render</div>
@@ -609,18 +604,13 @@
       <section class="card">
         <div class="card-header">
           <h2 class="card-title">Zarządzanie kategoriami</h2>
-          <p class="card-subtitle">Dodawaj własne kategorie i przypisuj im kolory zapisywane w bazie danych.</p>
+          <p class="card-subtitle">Dodawaj własne kategorie z automatycznie dobieranym, spójnym kolorem.</p>
         </div>
 
         <div class="form-grid">
           <div>
             <label class="field-label" for="new-category">Nazwa kategorii</label>
             <input id="new-category" placeholder="np. zdrowie, podróże, e-ON" />
-          </div>
-
-          <div>
-            <label class="field-label" for="category-color">Kolor kategorii</label>
-            <input id="category-color" type="color" value="#1a73e8" />
           </div>
 
           <button type="button" class="button button-primary" onclick="addCategory()">Dodaj kategorię</button>
@@ -875,6 +865,43 @@
     let categoriesMap = {};
     let monthlyPlansByCategory = {};
     let recurringTemplates = [];
+    const CATEGORY_COLOR_PALETTE = [
+      "#4f7ea8", // muted blue
+      "#2f9c95", // teal
+      "#5e9f75", // soft green
+      "#c59037", // amber
+      "#8069b2", // violet
+      "#64748b"  // slate gray
+    ];
+
+    function getCategoryColor(categoryName) {
+      const normalized = String(categoryName || "").trim().toLocaleLowerCase();
+      if (!normalized) return CATEGORY_COLOR_PALETTE[CATEGORY_COLOR_PALETTE.length - 1];
+
+      let hash = 0;
+      for (let i = 0; i < normalized.length; i += 1) {
+        hash = ((hash * 31) + normalized.charCodeAt(i)) >>> 0;
+      }
+
+      return CATEGORY_COLOR_PALETTE[hash % CATEGORY_COLOR_PALETTE.length];
+    }
+
+    function hexToRgb(hex) {
+      const normalized = hex.replace("#", "");
+      return {
+        r: parseInt(normalized.slice(0, 2), 16),
+        g: parseInt(normalized.slice(2, 4), 16),
+        b: parseInt(normalized.slice(4, 6), 16)
+      };
+    }
+
+    function getCategoryThemeStyle(categoryName) {
+      const color = getCategoryColor(categoryName);
+      const { r, g, b } = hexToRgb(color);
+      const tint = `rgba(${r}, ${g}, ${b}, 0.11)`;
+      const border = `rgba(${r}, ${g}, ${b}, 0.24)`;
+      return `--category-tint:${tint};--category-border:${border};`;
+    }
 
     async function parseResponse(response) {
       let data = {};
@@ -922,7 +949,8 @@
       categoriesMap = {};
 
       data.forEach(c => {
-        categoriesMap[c.name] = c.color;
+        const categoryColor = getCategoryColor(c.name);
+        categoriesMap[c.name] = categoryColor;
 
         const optionMain = document.createElement("option");
         optionMain.value = c.name;
@@ -946,9 +974,10 @@
 
         const item = document.createElement("div");
         item.className = "category-item";
+        item.style.cssText = getCategoryThemeStyle(c.name);
 
         item.innerHTML = `
-          <div class="chip" style="background:${c.color}">${c.name}</div>
+          <div class="chip" style="background:${categoryColor}">${c.name}</div>
           <button type="button" class="button button-danger button-small" onclick="deleteCategory('${encodeURIComponent(c.name)}')">Usuń</button>
         `;
 
@@ -961,7 +990,6 @@
 
     async function addCategory() {
       const input = document.getElementById("new-category");
-      const color = document.getElementById("category-color").value;
       const name = input.value.trim();
 
       if (!name) return;
@@ -970,7 +998,7 @@
         await parseResponse(await fetch(`${API}/categories`, {
           method: "POST",
           headers: {"Content-Type": "application/json"},
-          body: JSON.stringify({ name, color })
+          body: JSON.stringify({ name })
         }));
 
         input.value = "";
@@ -1045,10 +1073,11 @@
       }
 
       expenses.forEach(e => {
-        const color = categoriesMap[e.category] || "#7c8798";
+        const color = categoriesMap[e.category] || getCategoryColor(e.category);
 
         const item = document.createElement("div");
         item.className = "expense-item";
+        item.style.cssText = getCategoryThemeStyle(e.category);
 
         item.innerHTML = `
           <div class="expense-main">
@@ -1185,9 +1214,10 @@
       plans.forEach(plan => {
         monthlyPlansByCategory[plan.category] = plan;
 
-        const color = categoriesMap[plan.category] || "#7c8798";
+        const color = categoriesMap[plan.category] || getCategoryColor(plan.category);
         const item = document.createElement("div");
         item.className = "category-item";
+        item.style.cssText = getCategoryThemeStyle(plan.category);
         item.innerHTML = `
           <div>
             <div class="chip" style="background:${color}">${plan.category}</div>
@@ -1324,10 +1354,11 @@
       list.innerHTML = "";
 
       recurringTemplates.forEach(template => {
-        const color = categoriesMap[template.category] || "#7c8798";
+        const color = categoriesMap[template.category] || getCategoryColor(template.category);
         const status = template.is_active ? "Aktywny" : "Nieaktywny";
         const item = document.createElement("div");
         item.className = "category-item";
+        item.style.cssText = getCategoryThemeStyle(template.category);
         item.innerHTML = `
           <div>
             <div class="expense-title">${template.description}</div>
@@ -1582,7 +1613,7 @@
 
       const topContainer = document.getElementById("health-top-categories");
       const topRows = data.top_categories.map(item => (
-        `<span>${item.category}</span><strong>${item.spent} PLN (${item.share_percent.toFixed(1)}%)</strong>`
+        `<span class="chip" style="background:${getCategoryColor(item.category)}">${item.category}</span><strong>${item.spent} PLN (${item.share_percent.toFixed(1)}%)</strong>`
       ));
       renderSimpleList(topContainer, topRows, "Brak wydatków w tym miesiącu.");
 
@@ -1591,7 +1622,7 @@
         const status = item.over_budget
           ? '<span class="status-pill status-pill-danger">Ponad plan</span>'
           : '<span class="status-pill status-pill-good">W planie</span>';
-        return `<span>${item.category}</span><strong>${item.spent} / ${item.planned} PLN ${status}</strong>`;
+        return `<span class="chip" style="background:${getCategoryColor(item.category)}">${item.category}</span><strong>${item.spent} / ${item.planned} PLN ${status}</strong>`;
       });
       renderSimpleList(planContainer, planRows, "Brak planów i wydatków dla tego miesiąca.");
     }

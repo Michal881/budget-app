@@ -14,7 +14,6 @@ from datetime import date, timedelta
 import calendar
 import json
 import os
-import re
 
 app = FastAPI()
 
@@ -45,7 +44,6 @@ class ExpenseUpdate(BaseModel):
 
 class CategoryCreate(BaseModel):
     name: str
-    color: str
 
 
 class BudgetPlan(BaseModel):
@@ -81,7 +79,14 @@ class RecurringTemplateUpdate(BaseModel):
 
 budget_plans = []
 monthly_limits = []
-HEX_COLOR_RE = re.compile(r"^#[0-9a-fA-F]{6}$")
+CATEGORY_COLOR_PALETTE = [
+    "#4f7ea8",  # muted blue
+    "#2f9c95",  # teal
+    "#5e9f75",  # soft green
+    "#c59037",  # amber
+    "#8069b2",  # violet
+    "#64748b",  # slate gray
+]
 
 
 def validate_non_empty_text(value: str, field_name: str) -> str:
@@ -91,10 +96,11 @@ def validate_non_empty_text(value: str, field_name: str) -> str:
     return clean_value
 
 
-def validate_hex_color(value: str) -> str:
-    if not HEX_COLOR_RE.fullmatch(value):
-        raise HTTPException(status_code=400, detail="kolor musi mieć format #RRGGBB")
-    return value.lower()
+def resolve_category_color(category_name: str) -> str:
+    hash_value = 0
+    for char in category_name.casefold():
+        hash_value = (hash_value * 31 + ord(char)) % (2 ** 32)
+    return CATEGORY_COLOR_PALETTE[hash_value % len(CATEGORY_COLOR_PALETTE)]
 
 
 def save_data():
@@ -243,15 +249,15 @@ def seed_categories():
         existing = db.query(CategoryDB).count()
         if existing == 0:
             defaults = [
-                {"name": "czynsz", "color": "#7c8798"},
-                {"name": "jedzenie", "color": "#34a853"},
-                {"name": "transport", "color": "#1a73e8"},
-                {"name": "rozrywka", "color": "#a142f4"},
-                {"name": "barber", "color": "#f29900"},
+                {"name": "czynsz"},
+                {"name": "jedzenie"},
+                {"name": "transport"},
+                {"name": "rozrywka"},
+                {"name": "barber"},
             ]
 
             for item in defaults:
-                db.add(CategoryDB(name=item["name"], color=item["color"]))
+                db.add(CategoryDB(name=item["name"], color=resolve_category_color(item["name"])))
 
             db.commit()
     finally:
@@ -406,7 +412,7 @@ def get_categories():
             {
                 "id": c.id,
                 "name": c.name,
-                "color": c.color
+                "color": resolve_category_color(c.name)
             }
             for c in categories
         ]
@@ -417,7 +423,6 @@ def get_categories():
 @app.post("/categories")
 def add_category(category: CategoryCreate):
     clean_name = validate_non_empty_text(category.name, "nazwa kategorii")
-    clean_color = validate_hex_color(category.color)
 
     db = SessionLocal()
     try:
@@ -425,7 +430,7 @@ def add_category(category: CategoryCreate):
         if existing:
             raise HTTPException(status_code=409, detail="kategoria już istnieje")
 
-        new_category = CategoryDB(name=clean_name, color=clean_color)
+        new_category = CategoryDB(name=clean_name, color=resolve_category_color(clean_name))
         db.add(new_category)
         db.commit()
         db.refresh(new_category)
