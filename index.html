@@ -6,21 +6,32 @@
   <title>Budget App</title>
   <style>
     :root {
-      --bg: #f6f8fc;
+      --bg: #f3f5f9;
       --surface: #ffffff;
       --surface-soft: #f8fafc;
-      --text: #1f2937;
+      --surface-strong: #eef2f7;
+      --text: #111827;
       --text-soft: #6b7280;
       --border: #e5e7eb;
       --border-strong: #d1d5db;
-      --primary: #1a73e8;
-      --primary-hover: #1765cc;
-      --danger: #d93025;
-      --danger-soft: #fce8e6;
-      --success: #188038;
-      --warning: #b06000;
-      --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px rgba(16, 24, 40, 0.06);
-      --radius: 20px;
+      --primary: #1d4ed8;
+      --primary-hover: #1e40af;
+      --danger: #dc2626;
+      --danger-soft: #fef2f2;
+      --success: #16a34a;
+      --success-soft: #ecfdf3;
+      --warning: #d97706;
+      --warning-soft: #fff7ed;
+      --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+      --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --space-1: 8px;
+      --space-2: 12px;
+      --space-3: 16px;
+      --space-4: 20px;
+      --space-5: 24px;
+      --space-6: 32px;
     }
 
     * {
@@ -36,97 +47,124 @@
     }
 
     .app-shell {
-      max-width: 1180px;
+      max-width: 1220px;
       margin: 0 auto;
-      padding: 32px 20px 56px;
+      padding: var(--space-6) var(--space-4) 56px;
     }
 
     .topbar {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      margin-bottom: 28px;
+      gap: var(--space-3);
+      margin-bottom: var(--space-5);
     }
 
     .page-title {
       margin: 0;
-      font-size: 36px;
+      font-size: 34px;
       line-height: 1.1;
       font-weight: 700;
       letter-spacing: -0.02em;
     }
 
     .page-subtitle {
-      margin: 8px 0 0;
+      margin: var(--space-1) 0 0;
       color: var(--text-soft);
       font-size: 15px;
       line-height: 1.5;
-      max-width: 700px;
+      max-width: 680px;
     }
 
     .topbar-badge {
       background: var(--surface);
       border: 1px solid var(--border);
       color: var(--primary);
-      border-radius: 999px;
-      padding: 10px 14px;
-      font-size: 13px;
+      border-radius: var(--radius-sm);
+      padding: 9px 12px;
+      font-size: 12px;
       font-weight: 600;
       white-space: nowrap;
-      box-shadow: var(--shadow);
+      box-shadow: var(--shadow-sm);
     }
 
     .dashboard-grid {
       display: grid;
-      gap: 20px;
+      gap: var(--space-4);
     }
 
     .grid-2 {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .stack-section {
+      margin-top: var(--space-4);
+    }
+
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-5);
+    }
+
+    .budget-main {
+      border: 1px solid #dbe4f3;
       box-shadow: var(--shadow);
-      padding: 22px;
+    }
+
+    .budget-health-panel {
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+      border: 1px solid #dbe4f3;
     }
 
     .card-header {
-      margin-bottom: 18px;
+      margin-bottom: var(--space-4);
     }
 
     .card-title {
       margin: 0;
-      font-size: 24px;
+      font-size: 22px;
       line-height: 1.2;
       font-weight: 700;
       letter-spacing: -0.01em;
     }
 
     .card-subtitle {
-      margin: 8px 0 0;
+      margin: var(--space-1) 0 0;
       color: var(--text-soft);
       font-size: 14px;
       line-height: 1.45;
     }
 
+    .section-title {
+      margin: 0 0 var(--space-2);
+      font-size: 20px;
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+    }
+
+    .section-divider {
+      margin-top: var(--space-4);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--border);
+    }
+
     .form-grid {
       display: grid;
-      gap: 14px;
+      gap: var(--space-3);
     }
 
     .form-row {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
+      gap: var(--space-3);
     }
 
     .field-label {
       display: block;
-      margin: 0 0 8px;
+      margin: 0 0 var(--space-1);
       font-size: 13px;
       color: var(--text-soft);
       font-weight: 600;
@@ -141,8 +179,8 @@
     input,
     select {
       width: 100%;
-      min-height: 48px;
-      border-radius: 14px;
+      min-height: 46px;
+      border-radius: var(--radius-sm);
       border: 1px solid var(--border-strong);
       background: #fff;
       color: var(--text);
@@ -154,19 +192,19 @@
     input:focus,
     select:focus {
       border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.12);
+      box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.12);
     }
 
     input[type="color"] {
       padding: 6px;
-      min-height: 48px;
+      min-height: 46px;
     }
 
     .button {
-      min-height: 46px;
+      min-height: 44px;
       border: none;
-      border-radius: 14px;
-      padding: 0 18px;
+      border-radius: var(--radius-sm);
+      padding: 0 16px;
       cursor: pointer;
       transition: background 0.18s ease, transform 0.05s ease, opacity 0.18s ease;
       font-weight: 600;
@@ -186,35 +224,35 @@
     }
 
     .button-secondary {
-      background: #eef2f7;
-      color: #334155;
+      background: var(--surface-strong);
+      color: #1f2937;
       border: 1px solid var(--border);
     }
 
     .button-secondary:hover {
-      background: #e7edf5;
+      background: #e2e8f0;
     }
 
     .button-danger {
       background: var(--danger-soft);
       color: var(--danger);
-      border: 1px solid #f4c7c3;
+      border: 1px solid #fecaca;
     }
 
     .button-danger:hover {
-      background: #f8dbd8;
+      background: #fee2e2;
     }
 
     .button-small {
       min-height: 38px;
       padding: 0 14px;
-      border-radius: 12px;
+      border-radius: 10px;
       font-size: 14px;
     }
 
     .button-row {
       display: flex;
-      gap: 10px;
+      gap: var(--space-1);
       flex-wrap: wrap;
     }
 
@@ -226,15 +264,16 @@
 
     .stats-grid {
       display: grid;
-      gap: 14px;
+      gap: var(--space-3);
       grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin-top: var(--space-3);
     }
 
     .stat-card {
       background: var(--surface-soft);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 16px;
+      border-radius: var(--radius);
+      padding: var(--space-3);
     }
 
     .stat-label {
@@ -245,65 +284,77 @@
     }
 
     .stat-value {
-      font-size: 28px;
+      font-size: 34px;
       font-weight: 700;
       line-height: 1.1;
       letter-spacing: -0.02em;
     }
 
-    .value-green {
-      color: var(--success);
+    .dashboard-kpi-grid {
+      display: grid;
+      gap: var(--space-3);
+      grid-template-columns: 1.25fr 1fr 1fr;
+      margin-top: var(--space-3);
     }
 
-    .value-red {
-      color: var(--danger);
+    .kpi-card {
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: var(--space-4);
     }
 
-    .value-orange {
-      color: var(--warning);
+    .kpi-title {
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 13px;
+      font-weight: 600;
     }
+
+    .kpi-value {
+      margin-top: 10px;
+      font-size: 40px;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .kpi-help {
+      margin-top: 8px;
+      color: var(--text-soft);
+      font-size: 13px;
+    }
+
+    .value-green { color: var(--success); }
+    .value-red { color: var(--danger); }
+    .value-orange { color: var(--warning); }
 
     .budget-health-grid {
       display: grid;
-      gap: 14px;
+      gap: var(--space-3);
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      margin-top: 18px;
+      margin-top: var(--space-4);
     }
 
     .health-badge {
       display: inline-flex;
       align-items: center;
       border-radius: 999px;
-      padding: 7px 12px;
+      padding: 8px 14px;
       font-size: 13px;
       font-weight: 700;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
 
-    .health-good {
-      background: #e6f4ea;
-      color: var(--success);
-    }
-
-    .health-warning {
-      background: #fff4e5;
-      color: var(--warning);
-    }
-
-    .health-danger {
-      background: #fce8e6;
-      color: var(--danger);
-    }
-
-    .health-neutral {
-      background: #eef2f7;
-      color: #334155;
-    }
+    .health-good { background: var(--success-soft); color: var(--success); }
+    .health-warning { background: var(--warning-soft); color: var(--warning); }
+    .health-danger { background: var(--danger-soft); color: var(--danger); }
+    .health-neutral { background: #eef2f7; color: #334155; }
 
     .progress-track {
       width: 100%;
-      height: 12px;
-      background: #e5e7eb;
+      height: 16px;
+      background: #e6ebf2;
       border-radius: 999px;
       overflow: hidden;
     }
@@ -312,12 +363,13 @@
       height: 100%;
       width: 0%;
       background: var(--success);
-      transition: width 0.2s ease;
+      transition: width 0.25s ease;
+      border-radius: 999px;
     }
 
     .mini-list {
       display: grid;
-      gap: 8px;
+      gap: var(--space-1);
       margin-top: 10px;
     }
 
@@ -326,17 +378,18 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: 10px 12px;
+      padding: 12px 14px;
       background: var(--surface-soft);
       border: 1px solid var(--border);
-      border-radius: 12px;
+      border-radius: var(--radius-sm);
       font-size: 14px;
+      line-height: 1.35;
     }
 
     .categories-stack {
       display: grid;
-      gap: 10px;
-      margin-top: 14px;
+      gap: var(--space-2);
+      margin-top: var(--space-3);
     }
 
     .category-item {
@@ -346,8 +399,8 @@
       gap: 12px;
       background: var(--surface-soft);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      padding: 14px;
     }
 
     .chip {
@@ -357,7 +410,7 @@
       padding: 7px 12px;
       border-radius: 999px;
       color: white;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       letter-spacing: 0.01em;
       box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12);
@@ -365,16 +418,16 @@
 
     .expense-list {
       display: grid;
-      gap: 12px;
+      gap: var(--space-2);
     }
 
     .expense-item {
       background: var(--surface-soft);
       border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 16px;
+      border-radius: var(--radius);
+      padding: var(--space-4);
       display: grid;
-      gap: 14px;
+      gap: var(--space-3);
     }
 
     .expense-main {
@@ -385,7 +438,7 @@
     }
 
     .expense-title {
-      font-size: 17px;
+      font-size: 16px;
       font-weight: 700;
       line-height: 1.35;
       margin-bottom: 6px;
@@ -396,7 +449,7 @@
       font-size: 14px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
       flex-wrap: wrap;
     }
 
@@ -408,47 +461,104 @@
 
     .empty-state {
       color: var(--text-soft);
-      font-style: italic;
-      padding: 10px 0 2px;
+      padding: 14px;
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-sm);
+      background: var(--surface-soft);
     }
 
     .edit-panel {
       display: none;
       background: #f8fbff;
       border: 1px dashed #b6d0fb;
-      border-radius: 16px;
-      padding: 14px;
-      margin-top: 12px;
+      border-radius: var(--radius-sm);
+      padding: var(--space-3);
+      margin-top: var(--space-2);
     }
 
-    .edit-panel.active {
-      display: block;
-    }
+    .edit-panel.active { display: block; }
 
     .footer-note {
-      margin-top: 14px;
+      margin-top: 12px;
       color: var(--text-soft);
       font-size: 12px;
       line-height: 1.5;
     }
 
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      border: 1px solid transparent;
+    }
+
+    .status-pill-good {
+      color: var(--success);
+      background: var(--success-soft);
+      border-color: #b7ebc8;
+    }
+
+    .status-pill-danger {
+      color: var(--danger);
+      background: var(--danger-soft);
+      border-color: #fecaca;
+    }
+
+    .amount-inline {
+      font-weight: 700;
+      margin-left: auto;
+      text-align: right;
+      min-width: 140px;
+    }
+
+    @media (max-width: 1024px) {
+      .dashboard-kpi-grid { grid-template-columns: 1fr; }
+    }
+
     @media (max-width: 920px) {
       .grid-2,
       .stats-grid,
-      .form-row {
-        grid-template-columns: 1fr;
-      }
+      .form-row { grid-template-columns: 1fr; }
 
       .topbar {
         flex-direction: column;
         align-items: flex-start;
       }
 
-      .expense-main {
-        flex-direction: column;
+      .expense-main { flex-direction: column; }
+
+      .app-shell { padding: var(--space-4) var(--space-3) 40px; }
+      .card { padding: var(--space-4); }
+      .page-title { font-size: 30px; }
+    }
+
+    @media (max-width: 640px) {
+      .button,
+      input,
+      select { min-height: 48px; }
+
+      .button-row {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .budget-health-grid { grid-template-columns: 1fr; }
+
+      .expense-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .topbar-badge {
+        width: 100%;
+        text-align: center;
       }
     }
-  </style>
+</style>
 </head>
 <body>
   <div class="app-shell">
@@ -523,7 +633,7 @@
       </section>
     </div>
 
-    <section class="card" style="margin-top: 20px;">
+    <section class="card budget-main stack-section">
       <div class="card-header">
         <h2 class="card-title">Filtr i limit miesięczny</h2>
         <p class="card-subtitle">Filtruj wydatki po kategorii i miesiącu oraz ustaw prosty sposób sortowania listy.</p>
@@ -580,26 +690,29 @@
         </form>
       </div>
 
-      <div class="stats-grid" style="margin-top: 18px;">
-        <div class="stat-card">
-          <div class="stat-label">Limit</div>
-          <div class="stat-value" id="monthly-limit">0 PLN</div>
+      <div class="dashboard-kpi-grid">
+        <div class="kpi-card">
+          <p class="kpi-title">Limit miesięczny</p>
+          <div class="kpi-value" id="monthly-limit">0 PLN</div>
+          <div class="kpi-help">Ustalony budżet na wybrany miesiąc.</div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-label">Wydane</div>
-          <div class="stat-value value-orange" id="monthly-spent">0 PLN</div>
+        <div class="kpi-card">
+          <p class="kpi-title">Wydane</p>
+          <div class="kpi-value value-orange" id="monthly-spent">0 PLN</div>
+          <div class="kpi-help">Suma wszystkich wydatków.</div>
         </div>
 
-        <div class="stat-card">
-          <div class="stat-label">Zostało</div>
-          <div class="stat-value" id="monthly-remaining">0 PLN</div>
+        <div class="kpi-card">
+          <p class="kpi-title">Pozostało</p>
+          <div class="kpi-value" id="monthly-remaining">0 PLN</div>
+          <div class="kpi-help">Dodatnie = zapas, ujemne = przekroczenie.</div>
         </div>
       </div>
 
-      <section style="margin-top: 20px;">
+      <section class="card budget-health-panel stack-section">
         <div class="card-header">
-          <h3 class="card-title" style="font-size: 20px;">Budget Health</h3>
+          <h3 class="section-title">Budget Health</h3>
           <p class="card-subtitle">Szybki podgląd stanu budżetu dla wybranego miesiąca.</p>
         </div>
 
@@ -633,15 +746,15 @@
           </div>
         </div>
 
-        <div style="margin-top: 16px;">
+        <div class="section-divider">
           <div class="stat-label">Plan vs wykonanie (kategorie)</div>
           <div id="health-plan-vs-actual" class="mini-list"></div>
         </div>
       </section>
 
-      <section style="margin-top: 20px;">
+      <section class="stack-section">
         <div class="card-header">
-          <h3 class="card-title" style="font-size: 20px;">Plany budżetu (kategorie)</h3>
+          <h3 class="section-title">Plany budżetu (kategorie)</h3>
           <p class="card-subtitle">Jeden plan na kategorię w danym miesiącu. Dodanie istniejącej kategorii zaktualizuje kwotę.</p>
         </div>
 
@@ -664,7 +777,7 @@
       </section>
     </section>
 
-    <section class="card" style="margin-top: 20px;">
+    <section class="card stack-section">
       <div class="card-header">
         <h2 class="card-title">Wydatki cykliczne</h2>
         <p class="card-subtitle">Dodaj szablony tygodniowe i miesięczne, a potem wygeneruj wpisy jednym przyciskiem.</p>
@@ -721,7 +834,7 @@
       </div>
     </section>
 
-    <section class="card" style="margin-top: 20px;">
+    <section class="card stack-section">
       <div class="card-header">
         <h2 class="card-title">Wydatki</h2>
         <p class="card-subtitle">Możesz usuwać i edytować wpisy bez opuszczania widoku listy.</p>
@@ -940,11 +1053,12 @@
         item.innerHTML = `
           <div class="expense-main">
             <div style="flex:1;">
-              <div class="expense-title">${e.description} — ${e.amount} PLN</div>
+              <div class="expense-title">${e.description}</div>
               <div class="expense-meta">
                 <span>${e.date}</span>
                 <span>•</span>
                 <span class="chip" style="background:${color}">${e.category}</span>
+                <span class="amount-inline">${e.amount} PLN</span>
               </div>
 
               <div class="edit-panel" id="edit-box-${e.id}">
@@ -1216,9 +1330,10 @@
         item.className = "category-item";
         item.innerHTML = `
           <div>
-            <div class="expense-title">${template.description} — ${template.amount} PLN</div>
+            <div class="expense-title">${template.description}</div>
             <div class="expense-meta">
               <span class="chip" style="background:${color}">${template.category}</span>
+              <span class="amount-inline">${template.amount} PLN</span>
               <span>${template.frequency === "monthly" ? "miesięcznie" : "tygodniowo"}</span>
               <span>start: ${template.start_date}</span>
               <span>• ${status}</span>
@@ -1234,7 +1349,7 @@
       });
 
       if (recurringTemplates.length === 0) {
-        list.innerHTML = `<div class="empty-state">Brak szablonów cyklicznych.</div>`;
+        list.innerHTML = `<div class="empty-state">Brak wydatków cyklicznych. Dodaj pierwszy szablon, aby automatyzować wpisy.</div>`;
       }
     }
 
@@ -1473,8 +1588,10 @@
 
       const planContainer = document.getElementById("health-plan-vs-actual");
       const planRows = data.plan_vs_actual.map(item => {
-        const status = item.over_budget ? "🔴 ponad plan" : "🟢 w planie";
-        return `<span>${item.category}</span><strong>${item.spent} / ${item.planned} PLN (${status})</strong>`;
+        const status = item.over_budget
+          ? '<span class="status-pill status-pill-danger">Ponad plan</span>'
+          : '<span class="status-pill status-pill-good">W planie</span>';
+        return `<span>${item.category}</span><strong>${item.spent} / ${item.planned} PLN ${status}</strong>`;
       });
       renderSimpleList(planContainer, planRows, "Brak planów i wydatków dla tego miesiąca.");
     }
