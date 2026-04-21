@@ -133,15 +133,18 @@ def load_data():
     with open(DATA_FILE, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    budget_plans = [
-        BudgetPlan(
+    latest_plans_by_key = {}
+    for item in data.get("budget_plans", []):
+        plan = BudgetPlan(
             category=item["category"],
             year=item["year"],
             month=item["month"],
             planned_amount=item["planned_amount"]
         )
-        for item in data.get("budget_plans", [])
-    ]
+        plan_key = (plan.category, plan.year, plan.month)
+        latest_plans_by_key[plan_key] = plan
+
+    budget_plans = list(latest_plans_by_key.values())
 
     monthly_limits = [
         MonthlyLimit(
@@ -151,6 +154,40 @@ def load_data():
         )
         for item in data.get("monthly_limits", [])
     ]
+
+    save_data()
+
+
+def validate_year_month(year: int, month: int):
+    if month < 1 or month > 12:
+        raise HTTPException(status_code=400, detail="nieprawidłowy miesiąc")
+
+
+def upsert_budget_plan(plan: BudgetPlan):
+    global budget_plans
+
+    updated = False
+    next_plans = []
+
+    for existing in budget_plans:
+        same_key = (
+            existing.category == plan.category
+            and existing.year == plan.year
+            and existing.month == plan.month
+        )
+
+        if same_key:
+            next_plans.append(plan)
+            updated = True
+        else:
+            next_plans.append(existing)
+
+    if not updated:
+        next_plans.append(plan)
+
+    budget_plans = next_plans
+
+    return updated
 
 
 def seed_categories():
@@ -460,14 +497,17 @@ def add_budget_plan(plan: BudgetPlan):
         if not category_exists:
             raise HTTPException(status_code=400, detail="kategoria nie istnieje")
 
-        if plan.month < 1 or plan.month > 12:
-            raise HTTPException(status_code=400, detail="nieprawidłowy miesiąc")
+        validate_year_month(plan.year, plan.month)
         if plan.planned_amount < 0:
             raise HTTPException(status_code=400, detail="planowana kwota nie może być ujemna")
 
-        budget_plans.append(plan)
+        was_updated = upsert_budget_plan(plan)
         save_data()
-        return {"message": "dodano plan budżetu", "budget_plans": budget_plans}
+        return {
+            "message": "zaktualizowano plan budżetu" if was_updated else "dodano plan budżetu",
+            "plan": plan,
+            "updated": was_updated
+        }
     finally:
         db.close()
 
@@ -475,6 +515,42 @@ def add_budget_plan(plan: BudgetPlan):
 @app.get("/budget-plans")
 def get_budget_plans():
     return budget_plans
+
+
+@app.get("/budget-plans/month")
+def get_budget_plans_for_month(year: int, month: int):
+    validate_year_month(year, month)
+
+    return [
+        plan
+        for plan in budget_plans
+        if plan.year == year and plan.month == month
+    ]
+
+
+@app.delete("/budget-plans")
+def delete_budget_plan(category: str, year: int, month: int):
+    global budget_plans
+
+    clean_category = validate_non_empty_text(category, "kategoria")
+    validate_year_month(year, month)
+
+    before_count = len(budget_plans)
+    budget_plans = [
+        plan
+        for plan in budget_plans
+        if not (
+            plan.category == clean_category
+            and plan.year == year
+            and plan.month == month
+        )
+    ]
+
+    if len(budget_plans) == before_count:
+        raise HTTPException(status_code=404, detail="nie znaleziono planu budżetu")
+
+    save_data()
+    return {"message": "usunięto plan budżetu"}
 
 
 @app.get("/budget-summary")
