@@ -456,7 +456,7 @@
     <section class="card" style="margin-top: 20px;">
       <div class="card-header">
         <h2 class="card-title">Filtr i limit miesięczny</h2>
-        <p class="card-subtitle">Przeglądaj wydatki po kategoriach i kontroluj budżet dla wybranego miesiąca.</p>
+        <p class="card-subtitle">Filtruj wydatki po kategorii i miesiącu oraz ustaw prosty sposób sortowania listy.</p>
       </div>
 
       <div class="dashboard-grid grid-2">
@@ -465,6 +465,20 @@
             <label class="field-label" for="filter">Filtr kategorii</label>
             <select id="filter">
               <option value="">Wszystkie</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="field-label" for="filter-month">Filtr miesiąca</label>
+            <input id="filter-month" type="month" />
+          </div>
+
+          <div>
+            <label class="field-label" for="sort">Sortowanie</label>
+            <select id="sort">
+              <option value="date_desc">Data (najnowsze)</option>
+              <option value="amount_asc">Kwota (rosnąco)</option>
+              <option value="amount_desc">Kwota (malejąco)</option>
             </select>
           </div>
 
@@ -547,7 +561,11 @@
     }
 
     const API = resolveApiBaseUrl();
-    let currentFilter = "";
+    let currentFilters = {
+      category: "",
+      month: "",
+      sort: "date_desc"
+    };
     let categoriesMap = {};
 
     async function parseResponse(response) {
@@ -632,7 +650,7 @@
 
         input.value = "";
         await loadCategories();
-        await load(currentFilter);
+        await load(currentFilters);
       } catch (error) {
         alert(error.message);
       }
@@ -650,21 +668,42 @@
       }
 
       await loadCategories();
-      await load(currentFilter);
+      await load(currentFilters);
     }
 
-    async function load(category = currentFilter) {
-      currentFilter = category;
+    async function load(filters = currentFilters) {
+      currentFilters = { ...currentFilters, ...filters };
 
-      let url = `${API}/expenses`;
+      const params = new URLSearchParams();
 
-      if (category) {
-        url = `${API}/expenses/by_category?category=${encodeURIComponent(category)}`;
+      if (currentFilters.category) {
+        params.set("category", currentFilters.category);
       }
 
+      if (currentFilters.month) {
+        const [year, month] = currentFilters.month.split("-");
+        if (year && month) {
+          params.set("year", year);
+          params.set("month", month);
+        }
+      }
+
+      if (currentFilters.sort === "amount_asc") {
+        params.set("sort_by", "amount");
+        params.set("sort_order", "asc");
+      } else if (currentFilters.sort === "amount_desc") {
+        params.set("sort_by", "amount");
+        params.set("sort_order", "desc");
+      } else {
+        params.set("sort_by", "date");
+        params.set("sort_order", "desc");
+      }
+
+      const queryString = params.toString();
+      const url = queryString ? `${API}/expenses?${queryString}` : `${API}/expenses`;
       const res = await fetch(url);
       const data = await parseResponse(res);
-      const expenses = Array.isArray(data) ? data : data.expenses;
+      const expenses = Array.isArray(data) ? data : [];
 
       const list = document.getElementById("list");
       list.innerHTML = "";
@@ -778,13 +817,17 @@
     }
 
     function applyFilter() {
-      const value = document.getElementById("filter").value;
-      load(value);
+      const category = document.getElementById("filter").value;
+      const month = document.getElementById("filter-month").value;
+      const sort = document.getElementById("sort").value;
+      load({ category, month, sort });
     }
 
     function clearFilter() {
       document.getElementById("filter").value = "";
-      load("");
+      document.getElementById("filter-month").value = "";
+      document.getElementById("sort").value = "date_desc";
+      load({ category: "", month: "", sort: "date_desc" });
     }
 
     async function del(id) {
