@@ -6,26 +6,27 @@
   <title>Budget App</title>
   <style>
     :root {
-      --bg: #f3f5f9;
+      --bg: #f5f7fb;
       --surface: #ffffff;
-      --surface-soft: #f8fafc;
-      --surface-strong: #eef2f7;
-      --text: #111827;
-      --text-soft: #6b7280;
-      --border: #e5e7eb;
-      --border-strong: #d1d5db;
+      --surface-soft: #f8fafd;
+      --surface-muted: #eef2f7;
+      --text: #0f172a;
+      --text-soft: #667085;
+      --text-muted: #98a2b3;
+      --border: #e4e7ec;
       --primary: #1d4ed8;
-      --primary-hover: #1e40af;
-      --danger: #dc2626;
-      --danger-soft: #fef2f2;
+      --primary-strong: #1e40af;
       --success: #16a34a;
-      --success-soft: #ecfdf3;
       --warning: #d97706;
+      --danger: #dc2626;
+      --success-soft: #ecfdf3;
       --warning-soft: #fff7ed;
-      --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
-      --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      --danger-soft: #fef2f2;
+      --radius-lg: 24px;
       --radius: 18px;
       --radius-sm: 12px;
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.07);
+      --shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
       --space-1: 8px;
       --space-2: 12px;
       --space-3: 16px;
@@ -34,803 +35,420 @@
       --space-6: 32px;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html, body {
       margin: 0;
       padding: 0;
-      font-family: Inter, Arial, sans-serif;
-      background: var(--bg);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #f8faff 0%, var(--bg) 100%);
       color: var(--text);
     }
 
     .app-shell {
-      max-width: 1220px;
+      max-width: 1120px;
       margin: 0 auto;
-      padding: var(--space-6) var(--space-4) 56px;
-    }
-
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--space-3);
-      margin-bottom: var(--space-5);
-    }
-
-    .page-title {
-      margin: 0;
-      font-size: 34px;
-      line-height: 1.1;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-    }
-
-    .page-subtitle {
-      margin: var(--space-1) 0 0;
-      color: var(--text-soft);
-      font-size: 15px;
-      line-height: 1.5;
-      max-width: 680px;
-    }
-
-    .topbar-badge {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--primary);
-      border-radius: var(--radius-sm);
-      padding: 9px 12px;
-      font-size: 12px;
-      font-weight: 600;
-      white-space: nowrap;
-      box-shadow: var(--shadow-sm);
-    }
-
-    .dashboard-grid {
+      padding: var(--space-5) var(--space-3) 44px;
       display: grid;
       gap: var(--space-4);
     }
 
-    .grid-2 {
+    .hero {
+      background: radial-gradient(circle at 12% 15%, #eff4ff 0%, #f8fbff 34%, #ffffff 100%);
+      border: 1px solid #dae4f5;
+      box-shadow: var(--shadow);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      display: grid;
+      gap: var(--space-4);
+    }
+
+    .topbar { display: flex; justify-content: space-between; gap: var(--space-3); align-items: flex-start; }
+    .page-title { margin: 0; font-size: 30px; line-height: 1.08; letter-spacing: -0.02em; }
+    .page-subtitle { margin: 10px 0 0; color: var(--text-soft); font-size: 14px; line-height: 1.45; max-width: 66ch; }
+
+    .topbar-badge {
+      border: 1px solid #d8e1f0;
+      background: #ffffff;
+      color: #1e3a8a;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .quick-overview-grid {
+      display: grid;
+      gap: var(--space-2);
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .stack-section {
-      margin-top: var(--space-4);
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid #dde5f3;
+      border-radius: var(--radius);
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
     }
+
+    .kpi-title { margin: 0; color: var(--text-soft); font-size: 12px; font-weight: 600; }
+    .kpi-value { margin-top: 8px; font-size: 27px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; }
+    .kpi-help { margin-top: 6px; color: var(--text-muted); font-size: 12px; }
+
+    .status-kpi {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: linear-gradient(160deg, #16253e 0%, #203968 100%);
+      color: #fff;
+      border-color: transparent;
+    }
+    .status-kpi .kpi-title, .status-kpi .kpi-help { color: rgba(255,255,255,0.76); }
+    .status-kpi .kpi-value { color: #fff; font-size: 22px; }
+
+    .summary-status-pill {
+      display: inline-flex;
+      align-items: center;
+      align-self: flex-start;
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .summary-status-good { background: var(--success-soft); color: var(--success); border-color: #b7ebc8; }
+    .summary-status-warning { background: var(--warning-soft); color: var(--warning); border-color: #fbd3a0; }
+    .summary-status-danger { background: var(--danger-soft); color: var(--danger); border-color: #fecaca; }
+    .summary-status-neutral { background: #e9eff8; color: #334155; border-color: #d5dfef; }
+
+    .quick-actions {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid #e0e6f2;
+      border-radius: var(--radius);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .quick-actions h2 { margin: 0; font-size: 15px; letter-spacing: -0.01em; }
+
+    .quick-actions-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+
+    .action-chip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      text-decoration: none;
+      border-radius: 12px;
+      background: #eef3fd;
+      color: #1d4ed8;
+      border: 1px solid #d6e1f6;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .dashboard-grid { display: grid; gap: var(--space-4); }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow-sm);
-      padding: var(--space-5);
-    }
-
-    .budget-main {
-      border: 1px solid #dbe4f3;
-      box-shadow: var(--shadow);
-    }
-
-    .budget-health-panel {
-      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
-      border: 1px solid #dbe4f3;
-    }
-
-    .card-header {
-      margin-bottom: var(--space-4);
-    }
-
-    .card-title {
-      margin: 0;
-      font-size: 22px;
-      line-height: 1.2;
-      font-weight: 700;
-      letter-spacing: -0.01em;
-    }
-
-    .card-subtitle {
-      margin: var(--space-1) 0 0;
-      color: var(--text-soft);
-      font-size: 14px;
-      line-height: 1.45;
-    }
-
-    .section-title {
-      margin: 0 0 var(--space-2);
-      font-size: 20px;
-      line-height: 1.2;
-      letter-spacing: -0.01em;
-    }
-
-    .section-divider {
-      margin-top: var(--space-4);
-      padding-top: var(--space-4);
-      border-top: 1px solid var(--border);
-    }
-
-    .form-grid {
-      display: grid;
-      gap: var(--space-3);
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--space-3);
-    }
-
-    .field-label {
-      display: block;
-      margin: 0 0 var(--space-1);
-      font-size: 13px;
-      color: var(--text-soft);
-      font-weight: 600;
-    }
-
-    input,
-    select,
-    button {
-      font: inherit;
-    }
-
-    input,
-    select {
-      width: 100%;
-      min-height: 46px;
-      border-radius: var(--radius-sm);
-      border: 1px solid var(--border-strong);
-      background: #fff;
-      color: var(--text);
-      padding: 0 14px;
-      outline: none;
-      transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
-    }
-
-    input:focus,
-    select:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.12);
-    }
-
-    .button {
-      min-height: 44px;
-      border: none;
-      border-radius: var(--radius-sm);
-      padding: 0 16px;
-      cursor: pointer;
-      transition: background 0.18s ease, transform 0.05s ease, opacity 0.18s ease;
-      font-weight: 600;
-    }
-
-    .button:active {
-      transform: translateY(1px);
-    }
-
-    .button-primary {
-      background: var(--primary);
-      color: white;
-    }
-
-    .button-primary:hover {
-      background: var(--primary-hover);
-    }
-
-    .button-secondary {
-      background: var(--surface-strong);
-      color: #1f2937;
-      border: 1px solid var(--border);
-    }
-
-    .button-secondary:hover {
-      background: #e2e8f0;
-    }
-
-    .button-danger {
-      background: var(--danger-soft);
-      color: var(--danger);
-      border: 1px solid #fecaca;
-    }
-
-    .button-danger:hover {
-      background: #fee2e2;
-    }
-
-    .button-small {
-      min-height: 38px;
-      padding: 0 14px;
-      border-radius: 10px;
-      font-size: 14px;
-    }
-
-    .button-row {
-      display: flex;
-      gap: var(--space-1);
-      flex-wrap: wrap;
-    }
-
-    .helper-text {
-      min-height: 20px;
-      color: var(--text-soft);
-      font-size: 13px;
-    }
-
-    .stats-grid {
-      display: grid;
-      gap: var(--space-3);
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      margin-top: var(--space-3);
-    }
-
-    .stat-card {
-      background: var(--surface-soft);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: var(--space-3);
-    }
-
-    .stat-label {
-      color: var(--text-soft);
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-
-    .stat-value {
-      font-size: 34px;
-      font-weight: 700;
-      line-height: 1.1;
-      letter-spacing: -0.02em;
-    }
-
-    .dashboard-kpi-grid {
-      display: grid;
-      gap: var(--space-3);
-      grid-template-columns: 1.25fr 1fr 1fr;
-      margin-top: var(--space-3);
-    }
-
-    .kpi-card {
-      background: var(--surface-soft);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
       padding: var(--space-4);
     }
 
-    .kpi-title {
-      margin: 0;
-      color: var(--text-soft);
-      font-size: 13px;
-      font-weight: 600;
+    .card-header { margin-bottom: var(--space-3); }
+    .card-title { margin: 0; font-size: 20px; line-height: 1.2; }
+    .card-subtitle { margin: 8px 0 0; color: var(--text-soft); font-size: 13px; line-height: 1.45; }
+    .section-title { margin: 0 0 8px; font-size: 18px; letter-spacing: -0.01em; }
+
+    .form-grid, .categories-stack, .expense-list, .mini-list { display: grid; gap: 12px; }
+    .form-row { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .field-label { display: block; margin: 0 0 6px; font-size: 12px; color: var(--text-soft); font-weight: 600; }
+    input, select, button { font: inherit; }
+    input, select {
+      width: 100%; min-height: 46px; border-radius: 12px; border: 1px solid #d0d5dd; background: #fff;
+      color: var(--text); padding: 0 13px; outline: none;
+      transition: border-color .16s ease, box-shadow .16s ease;
+    }
+    input::placeholder { color: #98a2b3; }
+    input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(29,78,216,.13); }
+
+    .button { min-height: 44px; border: none; border-radius: 12px; padding: 0 14px; cursor: pointer; font-weight: 600; }
+    .button-primary { background: var(--primary); color: #fff; }
+    .button-primary:hover { background: var(--primary-strong); }
+    .button-secondary { background: #f3f6fb; color: #1f2937; border: 1px solid #dbe3f0; }
+    .button-danger { background: #fff; color: var(--danger); border: 1px solid #ffd2d2; }
+    .button-small { min-height: 38px; font-size: 13px; padding: 0 12px; }
+    .button-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .helper-text, .footer-note { color: var(--text-soft); font-size: 12px; line-height: 1.4; min-height: 18px; }
+
+    .budget-health-panel { background: linear-gradient(180deg, #f9fbff 0%, #fff 100%); border-color: #dce5f4; }
+    .budget-health-grid, .stats-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+    .stat-card { background: var(--surface-soft); border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; }
+    .stat-label { color: var(--text-soft); font-size: 12px; font-weight: 600; }
+    .stat-value { margin-top: 8px; font-size: 26px; font-weight: 800; }
+
+    .health-badge, .status-pill { display: inline-flex; align-items: center; border-radius: 999px; padding: 7px 11px; font-size: 12px; font-weight: 700; }
+    .health-good, .status-pill-good { background: var(--success-soft); color: var(--success); border: 1px solid #b7ebc8; }
+    .health-warning { background: var(--warning-soft); color: var(--warning); border: 1px solid #fbd3a0; }
+    .health-danger, .status-pill-danger { background: var(--danger-soft); color: var(--danger); border: 1px solid #fecaca; }
+    .health-neutral { background: #eef2f7; color: #334155; border: 1px solid #dde3ec; }
+
+    .progress-track { width: 100%; height: 12px; border-radius: 999px; overflow: hidden; background: #e3e8f0; margin-top: 10px; }
+    .progress-fill { height: 100%; width: 0%; background: var(--success); }
+
+    .mini-item {
+      display: flex; justify-content: space-between; align-items: center; gap: 10px;
+      padding: 10px 12px; background: var(--surface-soft); border: 1px solid #e5eaf1; border-radius: 12px; font-size: 13px;
     }
 
-    .kpi-value {
-      margin-top: 10px;
-      font-size: 40px;
-      line-height: 1;
-      font-weight: 800;
-      letter-spacing: -0.03em;
+    .category-item {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      background: var(--category-tint, var(--surface-soft)); border: 1px solid var(--category-border, #e3e8ef);
+      border-radius: 12px; padding: 12px;
     }
 
-    .kpi-help {
-      margin-top: 8px;
-      color: var(--text-soft);
-      font-size: 13px;
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px;
+      color: #fff; font-size: 11px; font-weight: 600;
     }
 
+    .expense-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: var(--shadow-sm);
+      display: grid;
+      gap: 10px;
+    }
+
+    .expense-main { display: grid; gap: 12px; }
+    .expense-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .expense-title { font-size: 15px; font-weight: 700; margin: 0; }
+    .expense-date { color: var(--text-soft); font-size: 12px; margin-top: 4px; }
+    .expense-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--text-soft); font-size: 12px; }
+    .amount-inline { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: #0f172a; }
+
+    .expense-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .empty-state {
+      color: var(--text-soft); padding: 14px; border: 1px dashed #d0d8e5;
+      border-radius: 12px; background: var(--surface-soft); font-size: 13px;
+    }
+
+    .edit-panel { display: none; background: #f8fbff; border: 1px dashed #b6d0fb; border-radius: 12px; padding: 12px; }
+    .edit-panel.active { display: block; }
+
+    .section-anchor { scroll-margin-top: 12px; }
     .value-green { color: var(--success); }
     .value-red { color: var(--danger); }
     .value-orange { color: var(--warning); }
 
-    .budget-health-grid {
-      display: grid;
-      gap: var(--space-3);
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      margin-top: var(--space-4);
+    .recurring-section { opacity: 0.96; }
+
+    @media (min-width: 860px) {
+      .app-shell { padding: var(--space-6) var(--space-4) 56px; }
+      .quick-overview-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+      .status-kpi { grid-column: span 2; }
+      .quick-actions-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .budget-health-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .expense-main { grid-template-columns: 1fr auto; align-items: center; }
+      .expense-actions { display: flex; }
     }
 
-    .health-badge {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      padding: 8px 14px;
-      font-size: 13px;
-      font-weight: 700;
-      margin-bottom: 12px;
+    @media (max-width: 859px) {
+      .grid-2, .form-row { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; }
+      .topbar-badge { width: fit-content; }
+      .button-row { display: grid; grid-template-columns: 1fr; }
     }
-
-    .health-good { background: var(--success-soft); color: var(--success); }
-    .health-warning { background: var(--warning-soft); color: var(--warning); }
-    .health-danger { background: var(--danger-soft); color: var(--danger); }
-    .health-neutral { background: #eef2f7; color: #334155; }
-
-    .progress-track {
-      width: 100%;
-      height: 16px;
-      background: #e6ebf2;
-      border-radius: 999px;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      background: var(--success);
-      transition: width 0.25s ease;
-      border-radius: 999px;
-    }
-
-    .mini-list {
-      display: grid;
-      gap: var(--space-1);
-      margin-top: 10px;
-    }
-
-    .mini-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 12px 14px;
-      background: var(--surface-soft);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      font-size: 14px;
-      line-height: 1.35;
-    }
-
-    .categories-stack {
-      display: grid;
-      gap: var(--space-2);
-      margin-top: var(--space-3);
-    }
-
-    .category-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      background: var(--category-tint, var(--surface-soft));
-      border: 1px solid var(--category-border, var(--border));
-      border-radius: var(--radius-sm);
-      padding: 14px;
-    }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 7px 12px;
-      border-radius: 999px;
-      color: white;
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.01em;
-      box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12);
-    }
-
-    .expense-list {
-      display: grid;
-      gap: var(--space-2);
-    }
-
-    .expense-item {
-      background: var(--category-tint, var(--surface-soft));
-      border: 1px solid var(--category-border, var(--border));
-      border-radius: var(--radius);
-      padding: var(--space-4);
-      display: grid;
-      gap: var(--space-3);
-    }
-
-    .expense-main {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .expense-title {
-      font-size: 16px;
-      font-weight: 700;
-      line-height: 1.35;
-      margin-bottom: 6px;
-    }
-
-    .expense-meta {
-      color: var(--text-soft);
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      flex-wrap: wrap;
-    }
-
-    .expense-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .empty-state {
-      color: var(--text-soft);
-      padding: 14px;
-      border: 1px dashed var(--border-strong);
-      border-radius: var(--radius-sm);
-      background: var(--surface-soft);
-    }
-
-    .edit-panel {
-      display: none;
-      background: #f8fbff;
-      border: 1px dashed #b6d0fb;
-      border-radius: var(--radius-sm);
-      padding: var(--space-3);
-      margin-top: var(--space-2);
-    }
-
-    .edit-panel.active { display: block; }
-
-    .footer-note {
-      margin-top: 12px;
-      color: var(--text-soft);
-      font-size: 12px;
-      line-height: 1.5;
-    }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-      padding: 6px 10px;
-      border: 1px solid transparent;
-    }
-
-    .status-pill-good {
-      color: var(--success);
-      background: var(--success-soft);
-      border-color: #b7ebc8;
-    }
-
-    .status-pill-danger {
-      color: var(--danger);
-      background: var(--danger-soft);
-      border-color: #fecaca;
-    }
-
-    .amount-inline {
-      font-weight: 700;
-      margin-left: auto;
-      text-align: right;
-      min-width: 140px;
-    }
-
-    @media (max-width: 1024px) {
-      .dashboard-kpi-grid { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 920px) {
-      .grid-2,
-      .stats-grid,
-      .form-row { grid-template-columns: 1fr; }
-
-      .topbar {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .expense-main { flex-direction: column; }
-
-      .app-shell { padding: var(--space-4) var(--space-3) 40px; }
-      .card { padding: var(--space-4); }
-      .page-title { font-size: 30px; }
-    }
-
-    @media (max-width: 640px) {
-      .button,
-      input,
-      select { min-height: 48px; }
-
-      .button-row {
-        display: grid;
-        grid-template-columns: 1fr;
-      }
-
-      .budget-health-grid { grid-template-columns: 1fr; }
-
-      .expense-actions {
-        width: 100%;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .topbar-badge {
-        width: 100%;
-        text-align: center;
-      }
-    }
-</style>
+  </style>
 </head>
 <body>
   <div class="app-shell">
-    <div class="topbar">
-      <div>
-        <h1 class="page-title">Budget App</h1>
-        <p class="page-subtitle">
-          Lekki, uporządkowany pulpit do zarządzania wydatkami, kategoriami i limitem miesięcznym.
-        </p>
-      </div>
-      <div class="topbar-badge">Live app · Render</div>
-    </div>
-
-    <div class="dashboard-grid grid-2">
-      <section class="card">
-        <div class="card-header">
-          <h2 class="card-title">Dodaj wydatek</h2>
-          <p class="card-subtitle">Wpisz nowy koszt i przypisz go do właściwej kategorii.</p>
+    <section class="hero section-anchor" id="dashboard-overview">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Budget App</h1>
+          <p class="page-subtitle">Twój miesięczny pulpit finansowy: szybki podgląd budżetu, kondycji wydatków i kluczowych działań.</p>
         </div>
-
-        <form id="form" class="form-grid">
-          <div>
-            <label class="field-label" for="amount">Kwota</label>
-            <input id="amount" type="number" step="0.01" min="0.01" max="1000000" placeholder="np. 42.50" required />
-          </div>
-
-          <div>
-            <label class="field-label" for="category">Kategoria</label>
-            <select id="category"></select>
-          </div>
-
-          <div>
-            <label class="field-label" for="description">Opis</label>
-            <input id="description" placeholder="np. obiad, taxi, kino" required />
-          </div>
-
-          <div>
-            <label class="field-label" for="date">Data</label>
-            <input id="date" type="date" required />
-          </div>
-
-          <button type="submit" class="button button-primary">Dodaj wydatek</button>
-        </form>
-
-        <div id="form-message" class="helper-text"></div>
-      </section>
-
-      <section class="card">
-        <div class="card-header">
-          <h2 class="card-title">Zarządzanie kategoriami</h2>
-          <p class="card-subtitle">Dodawaj własne kategorie z automatycznie dobieranym, spójnym kolorem.</p>
-        </div>
-
-        <div class="form-grid">
-          <div>
-            <label class="field-label" for="new-category">Nazwa kategorii</label>
-            <input id="new-category" placeholder="np. zdrowie, podróże, e-ON" />
-          </div>
-
-          <button type="button" class="button button-primary" onclick="addCategory()">Dodaj kategorię</button>
-        </div>
-
-        <div id="categories-list" class="categories-stack"></div>
-        <div class="footer-note">
-          Kategorię można usunąć tylko wtedy, gdy nie ma do niej przypisanych wydatków.
-        </div>
-      </section>
-    </div>
-
-    <section class="card budget-main stack-section">
-      <div class="card-header">
-        <h2 class="card-title">Filtr i limit miesięczny</h2>
-        <p class="card-subtitle">Filtruj wydatki po kategorii i miesiącu oraz ustaw prosty sposób sortowania listy.</p>
+        <div class="topbar-badge">Live app · Render</div>
       </div>
 
-      <div class="dashboard-grid grid-2">
-        <div class="form-grid">
-          <div>
-            <label class="field-label" for="filter">Filtr kategorii</label>
-            <select id="filter">
-              <option value="">Wszystkie</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="field-label" for="filter-month">Filtr miesiąca</label>
-            <input id="filter-month" type="month" />
-          </div>
-
-          <div>
-            <label class="field-label" for="sort">Sortowanie</label>
-            <select id="sort">
-              <option value="date_desc">Data (najnowsze)</option>
-              <option value="amount_asc">Kwota (rosnąco)</option>
-              <option value="amount_desc">Kwota (malejąco)</option>
-            </select>
-          </div>
-
-          <div class="button-row">
-            <button type="button" class="button button-primary button-small" onclick="applyFilter()">Pokaż</button>
-            <button type="button" class="button button-secondary button-small" onclick="clearFilter()">Wyczyść</button>
-          </div>
-        </div>
-
-        <form id="limit-form" class="form-grid">
-          <div class="form-row">
-            <div>
-              <label class="field-label" for="limit-year">Rok</label>
-              <input id="limit-year" type="number" value="2026" required />
-            </div>
-
-            <div>
-              <label class="field-label" for="limit-month">Miesiąc</label>
-              <input id="limit-month" type="number" value="4" min="1" max="12" required />
-            </div>
-          </div>
-
-          <div>
-            <label class="field-label" for="limit-amount">Limit miesięczny</label>
-            <input id="limit-amount" type="number" step="0.01" placeholder="np. 3000" required />
-          </div>
-
-          <button type="submit" class="button button-primary">Zapisz limit</button>
-        </form>
-      </div>
-
-      <div class="dashboard-kpi-grid">
+      <div class="quick-overview-grid">
         <div class="kpi-card">
-          <p class="kpi-title">Limit miesięczny</p>
+          <p class="kpi-title">Miesięczny budżet</p>
           <div class="kpi-value" id="monthly-limit">0 PLN</div>
-          <div class="kpi-help">Ustalony budżet na wybrany miesiąc.</div>
+          <div class="kpi-help">Limit na wybrany miesiąc.</div>
         </div>
-
         <div class="kpi-card">
           <p class="kpi-title">Wydane</p>
           <div class="kpi-value value-orange" id="monthly-spent">0 PLN</div>
-          <div class="kpi-help">Suma wszystkich wydatków.</div>
+          <div class="kpi-help">Suma zarejestrowanych transakcji.</div>
         </div>
-
         <div class="kpi-card">
           <p class="kpi-title">Pozostało</p>
           <div class="kpi-value" id="monthly-remaining">0 PLN</div>
           <div class="kpi-help">Dodatnie = zapas, ujemne = przekroczenie.</div>
         </div>
+        <div class="kpi-card">
+          <p class="kpi-title">Wykorzystanie</p>
+          <div class="kpi-value" id="monthly-usage">0%</div>
+          <div class="kpi-help">Procent wykorzystanego limitu.</div>
+        </div>
+        <div class="kpi-card status-kpi">
+          <p class="kpi-title">Status budżetu</p>
+          <div class="kpi-value" id="summary-status-text">Brak danych</div>
+          <div id="summary-status-pill" class="summary-status-pill summary-status-neutral">Ustaw limit i dodaj wydatki</div>
+        </div>
       </div>
 
-      <section class="card budget-health-panel stack-section">
+      <div class="quick-actions">
+        <h2>Szybkie akcje</h2>
+        <div class="quick-actions-grid">
+          <a href="#add-expense" class="action-chip">Dodaj wydatek</a>
+          <a href="#filters" class="action-chip">Filtruj wydatki</a>
+          <a href="#manage-categories" class="action-chip">Kategorie</a>
+          <a href="#budget-plans" class="action-chip">Plany budżetu</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="card budget-health-panel section-anchor" id="budget-health">
+      <div class="card-header">
+        <h2 class="card-title">Budget Health</h2>
+        <p class="card-subtitle">Panel kondycji finansowej z limitem, postępem i kategoriami ponad plan.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Wykorzystanie limitu</div><div class="stat-value" id="health-percent-used">0%</div></div>
+        <div class="stat-card"><div class="stat-label">Kategorii z wydatkami</div><div class="stat-value" id="health-categories-count">0</div></div>
+        <div class="stat-card"><div class="stat-label">Kategorii ponad plan</div><div class="stat-value value-red" id="health-over-budget-count">0</div></div>
+      </div>
+
+      <div class="budget-health-grid">
+        <div>
+          <div id="health-badge" class="health-badge health-neutral">Brak danych</div>
+          <div class="progress-track"><div id="health-progress-fill" class="progress-fill"></div></div>
+          <div id="health-progress-text" class="helper-text">Uzupełnij limit i wydatki, aby zobaczyć postęp.</div>
+        </div>
+        <div>
+          <div class="stat-label">Top wydatki (kategorie)</div>
+          <div id="health-top-categories" class="mini-list"></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:12px;padding:12px;">
+        <div class="stat-label">Plan vs wykonanie (kategorie)</div>
+        <div id="health-plan-vs-actual" class="mini-list"></div>
+      </div>
+    </section>
+
+    <section class="dashboard-grid grid-2">
+      <section class="card section-anchor" id="add-expense">
         <div class="card-header">
-          <h3 class="section-title">Budget Health</h3>
-          <p class="card-subtitle">Szybki podgląd stanu budżetu dla wybranego miesiąca.</p>
+          <h2 class="card-title">Dodaj wydatek</h2>
+          <p class="card-subtitle">Szybki zapis nowej transakcji.</p>
         </div>
-
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-label">Wykorzystanie limitu</div>
-            <div class="stat-value" id="health-percent-used">0%</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Liczba kategorii z wydatkami</div>
-            <div class="stat-value" id="health-categories-count">0</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-label">Kategorii ponad plan</div>
-            <div class="stat-value value-red" id="health-over-budget-count">0</div>
-          </div>
-        </div>
-
-        <div class="budget-health-grid">
-          <div>
-            <div id="health-badge" class="health-badge health-neutral">Brak danych</div>
-            <div class="progress-track">
-              <div id="health-progress-fill" class="progress-fill"></div>
-            </div>
-            <div id="health-progress-text" class="helper-text">Uzupełnij limit i wydatki, aby zobaczyć postęp.</div>
-          </div>
-
-          <div>
-            <div class="stat-label">Top wydatki (kategorie)</div>
-            <div id="health-top-categories" class="mini-list"></div>
-          </div>
-        </div>
-
-        <div class="section-divider">
-          <div class="stat-label">Plan vs wykonanie (kategorie)</div>
-          <div id="health-plan-vs-actual" class="mini-list"></div>
-        </div>
+        <form id="form" class="form-grid">
+          <div><label class="field-label" for="amount">Kwota</label><input id="amount" type="number" step="0.01" min="0.01" max="1000000" placeholder="np. 42.50" required /></div>
+          <div><label class="field-label" for="category">Kategoria</label><select id="category"></select></div>
+          <div><label class="field-label" for="description">Opis</label><input id="description" placeholder="np. obiad, taxi, kino" required /></div>
+          <div><label class="field-label" for="date">Data</label><input id="date" type="date" required /></div>
+          <button type="submit" class="button button-primary">Dodaj wydatek</button>
+        </form>
+        <div id="form-message" class="helper-text"></div>
       </section>
 
-      <section class="stack-section">
+      <section class="card section-anchor" id="filters">
         <div class="card-header">
-          <h3 class="section-title">Plany budżetu (kategorie)</h3>
-          <p class="card-subtitle">Jeden plan na kategorię w danym miesiącu. Dodanie istniejącej kategorii zaktualizuje kwotę.</p>
+          <h2 class="card-title">Filtry i limit miesięczny</h2>
+          <p class="card-subtitle">Wybierz miesiąc, kategorię i ustaw budżet.</p>
         </div>
 
+        <div class="form-grid">
+          <div><label class="field-label" for="filter">Filtr kategorii</label><select id="filter"><option value="">Wszystkie</option></select></div>
+          <div><label class="field-label" for="filter-month">Filtr miesiąca</label><input id="filter-month" type="month" /></div>
+          <div><label class="field-label" for="sort">Sortowanie</label><select id="sort"><option value="date_desc">Data (najnowsze)</option><option value="amount_asc">Kwota (rosnąco)</option><option value="amount_desc">Kwota (malejąco)</option></select></div>
+          <div class="button-row"><button type="button" class="button button-primary button-small" onclick="applyFilter()">Pokaż</button><button type="button" class="button button-secondary button-small" onclick="clearFilter()">Wyczyść</button></div>
+        </div>
+
+        <form id="limit-form" class="form-grid" style="margin-top:10px;">
+          <div class="form-row">
+            <div><label class="field-label" for="limit-year">Rok</label><input id="limit-year" type="number" value="2026" required /></div>
+            <div><label class="field-label" for="limit-month">Miesiąc</label><input id="limit-month" type="number" value="4" min="1" max="12" required /></div>
+          </div>
+          <div><label class="field-label" for="limit-amount">Limit miesięczny</label><input id="limit-amount" type="number" step="0.01" placeholder="np. 3000" required /></div>
+          <button type="submit" class="button button-primary">Zapisz limit</button>
+        </form>
+      </section>
+    </section>
+
+    <section class="card section-anchor" id="expenses-list">
+      <div class="card-header">
+        <h2 class="card-title">Wydatki</h2>
+        <p class="card-subtitle">Widok transakcyjny z szybkim edytowaniem i usuwaniem.</p>
+      </div>
+      <div id="list" class="expense-list"></div>
+    </section>
+
+    <section class="dashboard-grid grid-2">
+      <section class="card section-anchor" id="manage-categories">
+        <div class="card-header">
+          <h2 class="card-title">Kategorie</h2>
+          <p class="card-subtitle">Utrzymuj porządek w klasyfikacji wydatków.</p>
+        </div>
+        <div class="form-grid">
+          <div><label class="field-label" for="new-category">Nazwa kategorii</label><input id="new-category" placeholder="np. zdrowie, podróże, e-ON" /></div>
+          <button type="button" class="button button-primary" onclick="addCategory()">Dodaj kategorię</button>
+        </div>
+        <div id="categories-list" class="categories-stack"></div>
+        <div class="footer-note">Kategorię można usunąć tylko wtedy, gdy nie ma do niej przypisanych wydatków.</div>
+      </section>
+
+      <section class="card section-anchor" id="budget-plans">
+        <div class="card-header">
+          <h2 class="card-title">Plany budżetu</h2>
+          <p class="card-subtitle">Zaplanuj kwoty per kategoria i porównuj z realizacją.</p>
+        </div>
         <form id="budget-plan-form" class="form-grid">
           <div class="form-row">
-            <div>
-              <label class="field-label" for="plan-category">Kategoria</label>
-              <select id="plan-category"></select>
-            </div>
-            <div>
-              <label class="field-label" for="plan-amount">Planowana kwota</label>
-              <input id="plan-amount" type="number" step="0.01" min="0" placeholder="np. 1200" required />
-            </div>
+            <div><label class="field-label" for="plan-category">Kategoria</label><select id="plan-category"></select></div>
+            <div><label class="field-label" for="plan-amount">Planowana kwota</label><input id="plan-amount" type="number" step="0.01" min="0" placeholder="np. 1200" required /></div>
           </div>
           <button id="plan-submit" type="submit" class="button button-primary">Zapisz plan</button>
           <div id="plan-form-message" class="helper-text"></div>
         </form>
-
         <div id="budget-plans-list" class="categories-stack"></div>
       </section>
     </section>
 
-    <section class="card stack-section">
+    <section class="card recurring-section section-anchor" id="recurring-expenses">
       <div class="card-header">
         <h2 class="card-title">Wydatki cykliczne</h2>
-        <p class="card-subtitle">Dodaj szablony tygodniowe i miesięczne, a potem wygeneruj wpisy jednym przyciskiem.</p>
+        <p class="card-subtitle">Sekcja wspierająca: szablony tygodniowe i miesięczne.</p>
       </div>
-
       <div class="dashboard-grid grid-2">
         <form id="recurring-form" class="form-grid">
           <input id="recurring-id" type="hidden" />
-
-          <div>
-            <label class="field-label" for="recurring-description">Opis</label>
-            <input id="recurring-description" placeholder="np. Czynsz mieszkanie" required />
-          </div>
-
-          <div class="form-row">
-            <div>
-              <label class="field-label" for="recurring-amount">Kwota</label>
-              <input id="recurring-amount" type="number" step="0.01" min="0.01" max="1000000" required />
-            </div>
-
-            <div>
-              <label class="field-label" for="recurring-category">Kategoria</label>
-              <select id="recurring-category"></select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div>
-              <label class="field-label" for="recurring-frequency">Częstotliwość</label>
-              <select id="recurring-frequency">
-                <option value="monthly">Miesięcznie</option>
-                <option value="weekly">Tygodniowo</option>
-              </select>
-            </div>
-
-            <div>
-              <label class="field-label" for="recurring-start-date">Data startu</label>
-              <input id="recurring-start-date" type="date" required />
-            </div>
-          </div>
-
-          <div class="button-row">
-            <button type="submit" class="button button-primary button-small" id="recurring-submit">Dodaj szablon</button>
-            <button type="button" class="button button-secondary button-small" onclick="clearRecurringForm()">Wyczyść</button>
-            <button type="button" class="button button-primary button-small" onclick="generateRecurringExpenses()">Generuj teraz</button>
-          </div>
-
+          <div><label class="field-label" for="recurring-description">Opis</label><input id="recurring-description" placeholder="np. Czynsz mieszkanie" required /></div>
+          <div class="form-row"><div><label class="field-label" for="recurring-amount">Kwota</label><input id="recurring-amount" type="number" step="0.01" min="0.01" max="1000000" required /></div><div><label class="field-label" for="recurring-category">Kategoria</label><select id="recurring-category"></select></div></div>
+          <div class="form-row"><div><label class="field-label" for="recurring-frequency">Częstotliwość</label><select id="recurring-frequency"><option value="monthly">Miesięcznie</option><option value="weekly">Tygodniowo</option></select></div><div><label class="field-label" for="recurring-start-date">Data startu</label><input id="recurring-start-date" type="date" required /></div></div>
+          <div class="button-row"><button type="submit" class="button button-primary button-small" id="recurring-submit">Dodaj szablon</button><button type="button" class="button button-secondary button-small" onclick="clearRecurringForm()">Wyczyść</button><button type="button" class="button button-primary button-small" onclick="generateRecurringExpenses()">Generuj teraz</button></div>
           <div id="recurring-message" class="helper-text"></div>
         </form>
-
-        <div>
-          <div id="recurring-list" class="categories-stack"></div>
-        </div>
+        <div><div id="recurring-list" class="categories-stack"></div></div>
       </div>
-    </section>
-
-    <section class="card stack-section">
-      <div class="card-header">
-        <h2 class="card-title">Wydatki</h2>
-        <p class="card-subtitle">Możesz usuwać i edytować wpisy bez opuszczania widoku listy.</p>
-      </div>
-
-      <div id="list" class="expense-list"></div>
     </section>
   </div>
 
@@ -1081,13 +699,16 @@
 
         item.innerHTML = `
           <div class="expense-main">
-            <div style="flex:1;">
-              <div class="expense-title">${e.description}</div>
+            <div>
+              <div class="expense-top">
+                <div>
+                  <h4 class="expense-title">${e.description}</h4>
+                  <div class="expense-date">${e.date}</div>
+                </div>
+                <div class="amount-inline">${e.amount} PLN</div>
+              </div>
               <div class="expense-meta">
-                <span>${e.date}</span>
-                <span>•</span>
                 <span class="chip" style="background:${color}">${e.category}</span>
-                <span class="amount-inline">${e.amount} PLN</span>
               </div>
 
               <div class="edit-panel" id="edit-box-${e.id}">
@@ -1373,7 +994,7 @@
           <div class="button-row">
             <button type="button" class="button button-secondary button-small" onclick="editRecurringTemplate(${template.id})">Edytuj</button>
             <button type="button" class="button button-danger button-small" onclick="deactivateRecurringTemplate(${template.id})">Dezaktywuj</button>
-            <button type="button" class="button button-danger button-small" onclick="deleteRecurringTemplate(${template.id})">Usuń</button>
+            <button type="button" class="button button-secondary button-small" onclick="deleteRecurringTemplate(${template.id})">Usuń</button>
           </div>
         `;
         list.appendChild(item);
@@ -1551,6 +1172,32 @@
         remainingEl.classList.add("value-red");
       } else {
         remainingEl.classList.add("value-orange");
+      }
+
+      const usageEl = document.getElementById("monthly-usage");
+      const summaryStatusTextEl = document.getElementById("summary-status-text");
+      const summaryStatusPillEl = document.getElementById("summary-status-pill");
+      const percentUsed = data.limit > 0 ? (data.spent / data.limit) * 100 : 0;
+      usageEl.textContent = `${percentUsed.toFixed(1)}%`;
+
+      summaryStatusPillEl.classList.remove("summary-status-good", "summary-status-warning", "summary-status-danger", "summary-status-neutral");
+
+      if (data.limit <= 0) {
+        summaryStatusTextEl.textContent = "Brak limitu";
+        summaryStatusPillEl.textContent = "Ustaw miesięczny budżet";
+        summaryStatusPillEl.classList.add("summary-status-neutral");
+      } else if (data.remaining < 0) {
+        summaryStatusTextEl.textContent = "Przekroczony";
+        summaryStatusPillEl.textContent = "Wydatki przekroczyły plan";
+        summaryStatusPillEl.classList.add("summary-status-danger");
+      } else if (percentUsed >= 80) {
+        summaryStatusTextEl.textContent = "Uwaga";
+        summaryStatusPillEl.textContent = "Budżet blisko limitu";
+        summaryStatusPillEl.classList.add("summary-status-warning");
+      } else {
+        summaryStatusTextEl.textContent = "Dobry";
+        summaryStatusPillEl.textContent = "Budżet pod kontrolą";
+        summaryStatusPillEl.classList.add("summary-status-good");
       }
     }
 
