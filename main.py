@@ -3,6 +3,7 @@ from models import Expense as ExpenseDB
 from models import Category as CategoryDB
 from fastapi import FastAPI
 from fastapi import HTTPException
+from fastapi import Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
@@ -294,10 +295,43 @@ def add_expense(expense: ExpenseCreate):
 
 
 @app.get("/expenses")
-def get_expenses():
+def get_expenses(
+    category: str | None = None,
+    year: int | None = None,
+    month: int | None = Query(default=None, ge=1, le=12),
+    sort_by: str = Query(default="date", pattern="^(date|amount)$"),
+    sort_order: str | None = Query(default=None, pattern="^(asc|desc)$")
+):
     db = SessionLocal()
     try:
-        expenses = db.query(ExpenseDB).all()
+        query = db.query(ExpenseDB)
+
+        if category:
+            query = query.filter(ExpenseDB.category == category)
+
+        if year is not None and month is not None:
+            month_prefix = f"{year:04d}-{month:02d}"
+            query = query.filter(ExpenseDB.date.like(f"{month_prefix}-%"))
+        elif (year is None) != (month is None):
+            raise HTTPException(
+                status_code=400,
+                detail="podaj jednocześnie rok i miesiąc do filtrowania"
+            )
+
+        if sort_by == "amount":
+            effective_order = sort_order or "asc"
+            if effective_order == "desc":
+                query = query.order_by(ExpenseDB.amount.desc())
+            else:
+                query = query.order_by(ExpenseDB.amount.asc())
+        else:
+            effective_order = sort_order or "desc"
+            if effective_order == "asc":
+                query = query.order_by(ExpenseDB.date.asc())
+            else:
+                query = query.order_by(ExpenseDB.date.desc())
+
+        expenses = query.all()
 
         return [
             {
