@@ -1,13 +1,17 @@
 from database import SessionLocal
-from models import Expense as ExpenseDB
 from models import Category as CategoryDB
+from models import Expense as ExpenseDB
+from models import RecurringExpenseTemplate as RecurringExpenseTemplateDB
+from models import RecurringGenerationLog as RecurringGenerationLogDB
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi import Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
-from datetime import date
+from sqlalchemy import text
+from datetime import date, timedelta
+import calendar
 import json
 import os
 import re
@@ -55,6 +59,24 @@ class MonthlyLimit(BaseModel):
     year: int
     month: int
     limit_amount: float = Field(ge=0)
+
+
+class RecurringTemplateCreate(BaseModel):
+    description: str
+    amount: float = Field(gt=0, le=1_000_000)
+    category: str
+    frequency: str = Field(pattern="^(monthly|weekly)$")
+    start_date: date
+    is_active: bool = True
+
+
+class RecurringTemplateUpdate(BaseModel):
+    description: str | None = None
+    amount: float | None = Field(default=None, gt=0, le=1_000_000)
+    category: str | None = None
+    frequency: str | None = Field(default=None, pattern="^(monthly|weekly)$")
+    start_date: date | None = None
+    is_active: bool | None = None
 
 
 budget_plans = []
@@ -211,8 +233,129 @@ def seed_categories():
         db.close()
 
 
+def ensure_recurring_generation_unique_index():
+    db = SessionLocal()
+    try:
+        db.execute(text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS uq_recurring_generation_template_period "
+            "ON recurring_generation_logs (template_id, period_key)"
+        ))
+        db.commit()
+    finally:
+        db.close()
+
+
+def serialize_recurring_template(template: RecurringExpenseTemplateDB):
+    return {
+        "id": template.id,
+        "description": template.description,
+        "amount": template.amount,
+        "category": template.category,
+        "frequency": template.frequency,
+        "start_date": template.start_date,
+        "is_active": template.is_active,
+    }
+
+
+def get_monthly_due_date(template_start: date, year: int, month: int) -> date:
+    last_day = calendar.monthrange(year, month)[1]
+    target_day = min(template_start.day, last_day)
+    return date(year, month, target_day)
+
+
+def get_weekly_due_date(template_start: date, target_date: date) -> date | None:
+    if target_date < template_start:
+        return None
+
+    start_of_week = target_date - timedelta(days=target_date.weekday())
+    due_date = start_of_week + timedelta(days=template_start.weekday())
+
+    if due_date < template_start:
+        return None
+
+    if due_date > target_date:
+        return None
+
+    return due_date
+
+
+def generate_recurring_expenses(target_date: date):
+    db = SessionLocal()
+    try:
+        templates = (
+            db.query(RecurringExpenseTemplateDB)
+            .filter(RecurringExpenseTemplateDB.is_active == True)
+            .all()
+        )
+
+        generated_count = 0
+        skipped_count = 0
+
+        for template in templates:
+            template_start = date.fromisoformat(template.start_date)
+            if template_start > target_date:
+                skipped_count += 1
+                continue
+
+            if template.frequency == "monthly":
+                period_key = f"monthly:{target_date.year:04d}-{target_date.month:02d}"
+                due_date = get_monthly_due_date(template_start, target_date.year, target_date.month)
+                if due_date > target_date:
+                    skipped_count += 1
+                    continue
+            else:
+                iso_year, iso_week, _ = target_date.isocalendar()
+                period_key = f"weekly:{iso_year:04d}-W{iso_week:02d}"
+                due_date = get_weekly_due_date(template_start, target_date)
+                if due_date is None:
+                    skipped_count += 1
+                    continue
+
+            already_generated = (
+                db.query(RecurringGenerationLogDB)
+                .filter(
+                    RecurringGenerationLogDB.template_id == template.id,
+                    RecurringGenerationLogDB.period_key == period_key,
+                )
+                .first()
+            )
+
+            if already_generated:
+                skipped_count += 1
+                continue
+
+            expense = ExpenseDB(
+                description=template.description,
+                amount=template.amount,
+                date=due_date.isoformat(),
+                category=template.category,
+            )
+            db.add(expense)
+            db.flush()
+
+            db.add(
+                RecurringGenerationLogDB(
+                    template_id=template.id,
+                    period_key=period_key,
+                    expense_id=expense.id,
+                )
+            )
+            generated_count += 1
+
+        db.commit()
+
+        return {
+            "target_date": target_date.isoformat(),
+            "generated": generated_count,
+            "skipped": skipped_count,
+        }
+    finally:
+        db.close()
+
+
 load_data()
 seed_categories()
+ensure_recurring_generation_unique_index()
 
 
 @app.get("/")
@@ -286,6 +429,17 @@ def delete_category(category_name: str):
             raise HTTPException(
                 status_code=409,
                 detail="nie można usunąć kategorii, bo są do niej przypisane wydatki"
+            )
+
+        has_templates = (
+            db.query(RecurringExpenseTemplateDB)
+            .filter(RecurringExpenseTemplateDB.category == clean_name)
+            .first()
+        )
+        if has_templates:
+            raise HTTPException(
+                status_code=409,
+                detail="nie można usunąć kategorii, bo są do niej przypisane cykliczne wydatki"
             )
 
         db.delete(category)
@@ -487,6 +641,130 @@ def get_total_by_month(year: int, month: int):
         return {"year": year, "month": month, "total": total}
     finally:
         db.close()
+
+
+@app.post("/recurring-expenses")
+def add_recurring_template(template: RecurringTemplateCreate):
+    clean_description = validate_non_empty_text(template.description, "opis")
+
+    db = SessionLocal()
+    try:
+        category_exists = db.query(CategoryDB).filter(CategoryDB.name == template.category).first()
+        if not category_exists:
+            raise HTTPException(status_code=400, detail="kategoria nie istnieje")
+
+        recurring = RecurringExpenseTemplateDB(
+            description=clean_description,
+            amount=template.amount,
+            category=template.category,
+            frequency=template.frequency,
+            start_date=template.start_date.isoformat(),
+            is_active=template.is_active,
+        )
+
+        db.add(recurring)
+        db.commit()
+        db.refresh(recurring)
+
+        return {
+            "message": "dodano cykliczny wydatek",
+            "template": serialize_recurring_template(recurring),
+        }
+    finally:
+        db.close()
+
+
+@app.get("/recurring-expenses")
+def get_recurring_templates(include_inactive: bool = False):
+    db = SessionLocal()
+    try:
+        query = db.query(RecurringExpenseTemplateDB)
+        if not include_inactive:
+            query = query.filter(RecurringExpenseTemplateDB.is_active == True)
+
+        templates = query.order_by(RecurringExpenseTemplateDB.id.desc()).all()
+        return [serialize_recurring_template(template) for template in templates]
+    finally:
+        db.close()
+
+
+@app.put("/recurring-expenses/{template_id}")
+def update_recurring_template(template_id: int, payload: RecurringTemplateUpdate):
+    db = SessionLocal()
+    try:
+        template = db.query(RecurringExpenseTemplateDB).filter(RecurringExpenseTemplateDB.id == template_id).first()
+        if not template:
+            raise HTTPException(status_code=404, detail="nie znaleziono cyklicznego wydatku")
+
+        if payload.description is not None:
+            template.description = validate_non_empty_text(payload.description, "opis")
+
+        if payload.amount is not None:
+            template.amount = payload.amount
+
+        if payload.category is not None:
+            category_exists = db.query(CategoryDB).filter(CategoryDB.name == payload.category).first()
+            if not category_exists:
+                raise HTTPException(status_code=400, detail="kategoria nie istnieje")
+            template.category = payload.category
+
+        if payload.frequency is not None:
+            template.frequency = payload.frequency
+
+        if payload.start_date is not None:
+            template.start_date = payload.start_date.isoformat()
+
+        if payload.is_active is not None:
+            template.is_active = payload.is_active
+
+        db.commit()
+        db.refresh(template)
+
+        return {
+            "message": "zaktualizowano cykliczny wydatek",
+            "template": serialize_recurring_template(template),
+        }
+    finally:
+        db.close()
+
+
+@app.post("/recurring-expenses/{template_id}/deactivate")
+def deactivate_recurring_template(template_id: int):
+    db = SessionLocal()
+    try:
+        template = db.query(RecurringExpenseTemplateDB).filter(RecurringExpenseTemplateDB.id == template_id).first()
+        if not template:
+            raise HTTPException(status_code=404, detail="nie znaleziono cyklicznego wydatku")
+
+        template.is_active = False
+        db.commit()
+
+        return {"message": "dezaktywowano cykliczny wydatek"}
+    finally:
+        db.close()
+
+
+@app.delete("/recurring-expenses/{template_id}")
+def delete_recurring_template(template_id: int):
+    db = SessionLocal()
+    try:
+        template = db.query(RecurringExpenseTemplateDB).filter(RecurringExpenseTemplateDB.id == template_id).first()
+        if not template:
+            raise HTTPException(status_code=404, detail="nie znaleziono cyklicznego wydatku")
+
+        db.query(RecurringGenerationLogDB).filter(RecurringGenerationLogDB.template_id == template_id).delete()
+        db.delete(template)
+        db.commit()
+
+        return {"message": "usunięto cykliczny wydatek"}
+    finally:
+        db.close()
+
+
+@app.post("/recurring-expenses/generate")
+def generate_recurring(target_date: date | None = None):
+    generation_date = target_date or date.today()
+    return generate_recurring_expenses(generation_date)
 
 
 @app.post("/budget-plans")
