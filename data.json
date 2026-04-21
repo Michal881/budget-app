@@ -4,7 +4,7 @@
       "category": "jedzenie",
       "year": 2026,
       "month": 4,
-      "planned_amount": 300.0
+      "planned_amount": 1000.0
     },
     {
       "category": "rozrywka",
@@ -17,18 +17,6 @@
       "year": 2026,
       "month": 4,
       "planned_amount": 250.0
-    },
-    {
-      "category": "jedzenie",
-      "year": 2026,
-      "month": 4,
-      "planned_amount": 1000.0
-    },
-    {
-      "category": "jedzenie",
-      "year": 2026,
-      "month": 4,
-      "planned_amount": 1000.0
     }
   ],
   "monthly_limits": [
