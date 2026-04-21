@@ -25,8 +25,8 @@
       --radius-lg: 24px;
       --radius: 18px;
       --radius-sm: 12px;
-      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.07);
-      --shadow: 0 12px 34px rgba(15, 23, 42, 0.08);
+      --shadow-sm: 0 2px 7px rgba(15, 23, 42, 0.05);
+      --shadow: 0 14px 36px rgba(15, 23, 42, 0.07);
       --space-1: 8px;
       --space-2: 12px;
       --space-3: 16px;
@@ -89,12 +89,12 @@
       background: var(--surface);
       border: 1px solid #dde5f3;
       border-radius: var(--radius);
-      padding: 14px;
+      padding: 16px;
       box-shadow: var(--shadow-sm);
     }
 
     .kpi-title { margin: 0; color: var(--text-soft); font-size: 12px; font-weight: 600; }
-    .kpi-value { margin-top: 8px; font-size: 27px; line-height: 1.1; font-weight: 800; letter-spacing: -0.02em; }
+    .kpi-value { margin-top: 10px; font-size: 30px; line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; }
     .kpi-help { margin-top: 6px; color: var(--text-muted); font-size: 12px; }
 
     .status-kpi {
@@ -106,7 +106,29 @@
       border-color: transparent;
     }
     .status-kpi .kpi-title, .status-kpi .kpi-help { color: rgba(255,255,255,0.76); }
-    .status-kpi .kpi-value { color: #fff; font-size: 22px; }
+    .status-kpi .kpi-value { color: #fff; font-size: 25px; }
+    .status-progress {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.2);
+      overflow: hidden;
+      margin-top: 12px;
+    }
+    .status-progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #86efac 0%, #facc15 70%, #f87171 100%);
+      transition: width .25s ease;
+    }
+    .status-split {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.78);
+    }
 
     .summary-status-pill {
       display: inline-flex;
@@ -144,11 +166,44 @@
       min-height: 40px;
       text-decoration: none;
       border-radius: 12px;
-      background: #eef3fd;
-      color: #1d4ed8;
+      background: #edf3ff;
+      color: #1e3a8a;
       border: 1px solid #d6e1f6;
       font-size: 13px;
       font-weight: 600;
+      gap: 8px;
+      padding: 0 10px;
+      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+    }
+    .action-chip:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+      background: #e6efff;
+    }
+    .action-chip.action-chip-primary {
+      background: #1d4ed8;
+      color: #fff;
+      border-color: #1d4ed8;
+    }
+    .action-icon { opacity: .85; font-size: 14px; }
+
+    .trend-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      padding: var(--space-4);
+      display: grid;
+      gap: 10px;
+    }
+    .trend-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .trend-subtle { font-size: 12px; color: var(--text-soft); }
+    #spending-trend-chart {
+      width: 100%;
+      height: 84px;
+      display: block;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
     }
 
     .dashboard-grid { display: grid; gap: var(--space-4); }
@@ -191,6 +246,15 @@
     .helper-text, .footer-note { color: var(--text-soft); font-size: 12px; line-height: 1.4; min-height: 18px; }
 
     .budget-health-panel { background: linear-gradient(180deg, #f9fbff 0%, #fff 100%); border-color: #dce5f4; }
+    .insights-list { display: grid; gap: 8px; margin-top: 10px; }
+    .insight-item {
+      font-size: 13px;
+      color: #334155;
+      background: #f6f9ff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 9px 11px;
+    }
     .budget-health-grid, .stats-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
     .stat-card { background: var(--surface-soft); border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px; }
     .stat-label { color: var(--text-soft); font-size: 12px; font-weight: 600; }
@@ -226,7 +290,7 @@
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 14px;
-      box-shadow: var(--shadow-sm);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
       display: grid;
       gap: 10px;
     }
@@ -236,9 +300,19 @@
     .expense-title { font-size: 15px; font-weight: 700; margin: 0; }
     .expense-date { color: var(--text-soft); font-size: 12px; margin-top: 4px; }
     .expense-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--text-soft); font-size: 12px; }
-    .amount-inline { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: #0f172a; }
+    .amount-inline { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: #0f172a; }
 
     .expense-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .button-ghost {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: #475569;
+    }
+    .button-danger-subtle {
+      background: #fff;
+      border: 1px solid #fee2e2;
+      color: #b91c1c;
+    }
 
     .empty-state {
       color: var(--text-soft); padding: 14px; border: 1px dashed #d0d8e5;
@@ -309,6 +383,11 @@
         <div class="kpi-card status-kpi">
           <p class="kpi-title">Status budżetu</p>
           <div class="kpi-value" id="summary-status-text">Brak danych</div>
+          <div class="status-progress"><div id="summary-progress-fill" class="status-progress-fill"></div></div>
+          <div class="status-split">
+            <span id="summary-spent-inline">Wydane: 0 PLN</span>
+            <span id="summary-limit-inline">Limit: 0 PLN</span>
+          </div>
           <div id="summary-status-pill" class="summary-status-pill summary-status-neutral">Ustaw limit i dodaj wydatki</div>
         </div>
       </div>
@@ -316,12 +395,23 @@
       <div class="quick-actions">
         <h2>Szybkie akcje</h2>
         <div class="quick-actions-grid">
-          <a href="#add-expense" class="action-chip">Dodaj wydatek</a>
-          <a href="#filters" class="action-chip">Filtruj wydatki</a>
-          <a href="#manage-categories" class="action-chip">Kategorie</a>
-          <a href="#budget-plans" class="action-chip">Plany budżetu</a>
+          <a href="#add-expense" class="action-chip action-chip-primary"><span class="action-icon">＋</span>Dodaj wydatek</a>
+          <a href="#filters" class="action-chip"><span class="action-icon">⌕</span>Filtruj wydatki</a>
+          <a href="#manage-categories" class="action-chip"><span class="action-icon">◉</span>Kategorie</a>
+          <a href="#budget-plans" class="action-chip"><span class="action-icon">◌</span>Plany budżetu</a>
         </div>
       </div>
+    </section>
+
+    <section class="trend-panel section-anchor" id="spending-trend">
+      <div class="trend-header">
+        <div>
+          <h3 class="section-title" style="margin:0;">Trend wydatków (ostatnie 7 dni)</h3>
+          <div class="trend-subtle">Szybki podgląd rytmu wydawania bez rozbudowanej analityki.</div>
+        </div>
+        <div id="trend-summary" class="trend-subtle">Brak danych</div>
+      </div>
+      <canvas id="spending-trend-chart" width="1000" height="180"></canvas>
     </section>
 
     <section class="card budget-health-panel section-anchor" id="budget-health">
@@ -341,6 +431,7 @@
           <div id="health-badge" class="health-badge health-neutral">Brak danych</div>
           <div class="progress-track"><div id="health-progress-fill" class="progress-fill"></div></div>
           <div id="health-progress-text" class="helper-text">Uzupełnij limit i wydatki, aby zobaczyć postęp.</div>
+          <div id="health-insights" class="insights-list"></div>
         </div>
         <div>
           <div class="stat-label">Top wydatki (kategorie)</div>
@@ -549,6 +640,71 @@
       return data.detail || data.message || "Wystąpił błąd serwera";
     }
 
+    function formatCurrency(amount) {
+      const value = Number(amount || 0);
+      return `${value.toFixed(2)} PLN`;
+    }
+
+    function drawSpendingTrend(expenses) {
+      const canvas = document.getElementById("spending-trend-chart");
+      const summary = document.getElementById("trend-summary");
+      const ctx = canvas.getContext("2d");
+      const width = canvas.width;
+      const height = canvas.height;
+      ctx.clearRect(0, 0, width, height);
+
+      const grouped = new Map();
+      (expenses || []).forEach(expense => {
+        const dateKey = expense.date;
+        const current = grouped.get(dateKey) || 0;
+        grouped.set(dateKey, current + Number(expense.amount || 0));
+      });
+
+      const lastSeven = Array.from(grouped.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .slice(-7);
+
+      if (lastSeven.length === 0) {
+        summary.textContent = "Brak danych";
+        ctx.fillStyle = "#94a3b8";
+        ctx.font = "13px Inter, sans-serif";
+        ctx.fillText("Dodaj wydatki, aby zobaczyć mini trend.", 18, 38);
+        return;
+      }
+
+      const values = lastSeven.map(([, amount]) => amount);
+      const maxValue = Math.max(...values, 1);
+      const minValue = Math.min(...values, 0);
+      const pointGap = width / (lastSeven.length + 1);
+      const padY = 24;
+      const range = Math.max(maxValue - minValue, 1);
+      const total = values.reduce((sum, value) => sum + value, 0);
+
+      summary.textContent = `${formatCurrency(total)} w 7 dniach`;
+
+      ctx.beginPath();
+      values.forEach((value, index) => {
+        const x = pointGap * (index + 1);
+        const normalized = (value - minValue) / range;
+        const y = (height - padY) - (normalized * (height - (padY * 2)));
+        if (index === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = "#3b82f6";
+      ctx.stroke();
+
+      values.forEach((value, index) => {
+        const x = pointGap * (index + 1);
+        const normalized = (value - minValue) / range;
+        const y = (height - padY) - (normalized * (height - (padY * 2)));
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = "#1d4ed8";
+        ctx.fill();
+      });
+    }
+
     async function loadCategories() {
       const res = await fetch(`${API}/categories`);
       const data = await parseResponse(res);
@@ -681,12 +837,13 @@
       const res = await fetch(url);
       const data = await parseResponse(res);
       const expenses = Array.isArray(data) ? data : [];
+      drawSpendingTrend(expenses);
 
       const list = document.getElementById("list");
       list.innerHTML = "";
 
       if (!expenses || expenses.length === 0) {
-        list.innerHTML = `<div class="empty-state">Brak wydatków</div>`;
+        list.innerHTML = `<div class="empty-state">Brak transakcji w tym widoku. Dodaj wydatek, aby rozpocząć historię finansową.</div>`;
         return;
       }
 
@@ -743,8 +900,8 @@
             </div>
 
             <div class="expense-actions">
-              <button type="button" class="button button-secondary button-small" onclick="startEdit(${e.id})">Edytuj</button>
-              <button type="button" class="button button-danger button-small" onclick="del(${e.id})">Usuń</button>
+              <button type="button" class="button button-ghost button-small" onclick="startEdit(${e.id})">✎ Edytuj</button>
+              <button type="button" class="button button-danger-subtle button-small" onclick="del(${e.id})">🗑 Usuń</button>
             </div>
           </div>
         `;
@@ -1177,8 +1334,14 @@
       const usageEl = document.getElementById("monthly-usage");
       const summaryStatusTextEl = document.getElementById("summary-status-text");
       const summaryStatusPillEl = document.getElementById("summary-status-pill");
+      const summaryProgressFill = document.getElementById("summary-progress-fill");
+      const summarySpentInline = document.getElementById("summary-spent-inline");
+      const summaryLimitInline = document.getElementById("summary-limit-inline");
       const percentUsed = data.limit > 0 ? (data.spent / data.limit) * 100 : 0;
       usageEl.textContent = `${percentUsed.toFixed(1)}%`;
+      summaryProgressFill.style.width = `${Math.min(percentUsed, 100)}%`;
+      summarySpentInline.textContent = `Wydane: ${formatCurrency(data.spent)}`;
+      summaryLimitInline.textContent = `Limit: ${formatCurrency(data.limit)}`;
 
       summaryStatusPillEl.classList.remove("summary-status-good", "summary-status-warning", "summary-status-danger", "summary-status-neutral");
 
@@ -1257,6 +1420,26 @@
       progressText.textContent = data.limit > 0
         ? `Wydano ${data.spent} PLN z limitu ${data.limit} PLN.`
         : "Nie ustawiono limitu miesięcznego.";
+
+      const insightsContainer = document.getElementById("health-insights");
+      const topCategory = data.top_categories[0];
+      const overBudgetCount = data.plan_vs_actual.filter(item => item.over_budget).length;
+      const insightRows = [];
+      insightRows.push(`Wykorzystano ${data.percent_used.toFixed(1)}% miesięcznego budżetu.`);
+      if (topCategory) {
+        insightRows.push(`Najwięcej wydajesz na: ${topCategory.category} (${topCategory.share_percent.toFixed(1)}%).`);
+      }
+      if (data.limit > 0) {
+        insightRows.push(data.percent_used <= 75
+          ? "Tempo wydatków wygląda stabilnie na ten miesiąc."
+          : "Tempo wydatków rośnie — warto kontrolować kolejne transakcje.");
+      } else {
+        insightRows.push("Ustaw limit, aby aktywować dokładniejsze wskazówki.");
+      }
+      if (overBudgetCount > 0) {
+        insightRows.push(`${overBudgetCount} kategorii przekracza plan.`);
+      }
+      insightsContainer.innerHTML = insightRows.slice(0, 3).map(text => `<div class="insight-item">${text}</div>`).join("");
 
       const topContainer = document.getElementById("health-top-categories");
       const topRows = data.top_categories.map(item => (
