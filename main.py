@@ -263,20 +263,38 @@ def get_monthly_due_date(template_start: date, year: int, month: int) -> date:
     return date(year, month, target_day)
 
 
-def get_weekly_due_date(template_start: date, target_date: date) -> date | None:
-    if target_date < template_start:
-        return None
+def get_due_occurrences(template: RecurringExpenseTemplateDB, target_date: date):
+    template_start = date.fromisoformat(template.start_date)
+    if template_start > target_date:
+        return []
 
-    start_of_week = target_date - timedelta(days=target_date.weekday())
-    due_date = start_of_week + timedelta(days=template_start.weekday())
+    occurrences = []
 
-    if due_date < template_start:
-        return None
+    if template.frequency == "monthly":
+        current_year = template_start.year
+        current_month = template_start.month
+        end_year_month = (target_date.year, target_date.month)
 
-    if due_date > target_date:
-        return None
+        while (current_year, current_month) <= end_year_month:
+            due_date = get_monthly_due_date(template_start, current_year, current_month)
+            if due_date <= target_date:
+                period_key = f"monthly:{current_year:04d}-{current_month:02d}"
+                occurrences.append((period_key, due_date))
 
-    return due_date
+            if current_month == 12:
+                current_year += 1
+                current_month = 1
+            else:
+                current_month += 1
+    else:
+        due_date = template_start
+        while due_date <= target_date:
+            iso_year, iso_week, _ = due_date.isocalendar()
+            period_key = f"weekly:{iso_year:04d}-W{iso_week:02d}"
+            occurrences.append((period_key, due_date))
+            due_date = due_date + timedelta(days=7)
+
+    return occurrences
 
 
 def generate_recurring_expenses(target_date: date):
@@ -292,55 +310,41 @@ def generate_recurring_expenses(target_date: date):
         skipped_count = 0
 
         for template in templates:
-            template_start = date.fromisoformat(template.start_date)
-            if template_start > target_date:
+            existing_period_keys = {
+                row.period_key
+                for row in db.query(RecurringGenerationLogDB)
+                .filter(RecurringGenerationLogDB.template_id == template.id)
+                .all()
+            }
+
+            due_occurrences = get_due_occurrences(template, target_date)
+            if not due_occurrences:
                 skipped_count += 1
                 continue
 
-            if template.frequency == "monthly":
-                period_key = f"monthly:{target_date.year:04d}-{target_date.month:02d}"
-                due_date = get_monthly_due_date(template_start, target_date.year, target_date.month)
-                if due_date > target_date:
-                    skipped_count += 1
-                    continue
-            else:
-                iso_year, iso_week, _ = target_date.isocalendar()
-                period_key = f"weekly:{iso_year:04d}-W{iso_week:02d}"
-                due_date = get_weekly_due_date(template_start, target_date)
-                if due_date is None:
+            for period_key, due_date in due_occurrences:
+                if period_key in existing_period_keys:
                     skipped_count += 1
                     continue
 
-            already_generated = (
-                db.query(RecurringGenerationLogDB)
-                .filter(
-                    RecurringGenerationLogDB.template_id == template.id,
-                    RecurringGenerationLogDB.period_key == period_key,
+                expense = ExpenseDB(
+                    description=template.description,
+                    amount=template.amount,
+                    date=due_date.isoformat(),
+                    category=template.category,
                 )
-                .first()
-            )
+                db.add(expense)
+                db.flush()
 
-            if already_generated:
-                skipped_count += 1
-                continue
-
-            expense = ExpenseDB(
-                description=template.description,
-                amount=template.amount,
-                date=due_date.isoformat(),
-                category=template.category,
-            )
-            db.add(expense)
-            db.flush()
-
-            db.add(
-                RecurringGenerationLogDB(
-                    template_id=template.id,
-                    period_key=period_key,
-                    expense_id=expense.id,
+                db.add(
+                    RecurringGenerationLogDB(
+                        template_id=template.id,
+                        period_key=period_key,
+                        expense_id=expense.id,
+                    )
                 )
-            )
-            generated_count += 1
+                existing_period_keys.add(period_key)
+                generated_count += 1
 
         db.commit()
 
