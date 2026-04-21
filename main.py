@@ -185,6 +185,31 @@ def validate_year_month(year: int, month: int):
         raise HTTPException(status_code=400, detail="nieprawidłowy miesiąc")
 
 
+def get_monthly_expenses(year: int, month: int):
+    db = SessionLocal()
+    try:
+        month_prefix = f"{year:04d}-{month:02d}"
+        return (
+            db.query(ExpenseDB)
+            .filter(ExpenseDB.date.like(f"{month_prefix}-%"))
+            .all()
+        )
+    finally:
+        db.close()
+
+
+def get_monthly_limit_value(year: int, month: int):
+    limit_value = 0
+    for item in monthly_limits:
+        if item.year == year and item.month == month:
+            limit_value = item.limit_amount
+    return limit_value
+
+
+def get_monthly_spent(expenses: list[ExpenseDB]):
+    return sum(expense.amount for expense in expenses)
+
+
 def upsert_budget_plan(plan: BudgetPlan):
     global budget_plans
 
@@ -632,19 +657,9 @@ def get_total_expenses():
 
 @app.get("/expenses/total_by_month")
 def get_total_by_month(year: int, month: int):
-    db = SessionLocal()
-    try:
-        expenses = db.query(ExpenseDB).all()
-
-        total = 0
-        for expense in expenses:
-            expense_date = date.fromisoformat(expense.date)
-            if expense_date.year == year and expense_date.month == month:
-                total += expense.amount
-
-        return {"year": year, "month": month, "total": total}
-    finally:
-        db.close()
+    validate_year_month(year, month)
+    expenses = get_monthly_expenses(year, month)
+    return {"year": year, "month": month, "total": get_monthly_spent(expenses)}
 
 
 @app.post("/recurring-expenses")
@@ -895,12 +910,8 @@ def set_monthly_limit(limit: MonthlyLimit):
 
 @app.get("/monthly-limit")
 def get_monthly_limit(year: int, month: int):
-    limit_value = 0
-
-    for item in monthly_limits:
-        if item.year == year and item.month == month:
-            limit_value = item.limit_amount
-
+    validate_year_month(year, month)
+    limit_value = get_monthly_limit_value(year, month)
     return {
         "year": year,
         "month": month,
@@ -910,29 +921,80 @@ def get_monthly_limit(year: int, month: int):
 
 @app.get("/monthly-summary")
 def get_monthly_summary(year: int, month: int):
-    db = SessionLocal()
-    try:
-        expenses = db.query(ExpenseDB).all()
+    validate_year_month(year, month)
+    expenses = get_monthly_expenses(year, month)
+    spent = get_monthly_spent(expenses)
+    limit_value = get_monthly_limit_value(year, month)
+    remaining = limit_value - spent
 
-        spent = 0
-        for expense in expenses:
-            expense_date = date.fromisoformat(expense.date)
-            if expense_date.year == year and expense_date.month == month:
-                spent += expense.amount
+    return {
+        "year": year,
+        "month": month,
+        "limit": limit_value,
+        "spent": spent,
+        "remaining": remaining
+    }
 
-        limit_value = 0
-        for item in monthly_limits:
-            if item.year == year and item.month == month:
-                limit_value = item.limit_amount
 
-        remaining = limit_value - spent
+@app.get("/dashboard/monthly")
+def get_monthly_dashboard(year: int, month: int):
+    validate_year_month(year, month)
+    expenses = get_monthly_expenses(year, month)
+    spent = get_monthly_spent(expenses)
+    limit_value = get_monthly_limit_value(year, month)
+    remaining = limit_value - spent
+    percent_used = (spent / limit_value * 100) if limit_value > 0 else 0
 
-        return {
-            "year": year,
-            "month": month,
-            "limit": limit_value,
-            "spent": spent,
-            "remaining": remaining
+    if limit_value == 0:
+        health_status = "no_limit"
+    elif remaining < 0:
+        health_status = "over_budget"
+    elif percent_used >= 80:
+        health_status = "warning"
+    else:
+        health_status = "good"
+
+    spent_by_category = {}
+    for expense in expenses:
+        spent_by_category[expense.category] = spent_by_category.get(expense.category, 0) + expense.amount
+
+    top_categories = [
+        {
+            "category": category,
+            "spent": amount,
+            "share_percent": (amount / spent * 100) if spent > 0 else 0
         }
-    finally:
-        db.close()
+        for category, amount in sorted(spent_by_category.items(), key=lambda item: item[1], reverse=True)[:3]
+    ]
+
+    plans_by_category = {
+        plan.category: plan.planned_amount
+        for plan in budget_plans
+        if plan.year == year and plan.month == month
+    }
+    categories = set(plans_by_category.keys()) | set(spent_by_category.keys())
+
+    plan_vs_actual = []
+    for category in sorted(categories):
+        planned_amount = plans_by_category.get(category, 0)
+        spent_amount = spent_by_category.get(category, 0)
+        variance = planned_amount - spent_amount
+        plan_vs_actual.append({
+            "category": category,
+            "planned": planned_amount,
+            "spent": spent_amount,
+            "variance": variance,
+            "over_budget": variance < 0
+        })
+
+    return {
+        "year": year,
+        "month": month,
+        "limit": limit_value,
+        "spent": spent,
+        "remaining": remaining,
+        "percent_used": percent_used,
+        "health_status": health_status,
+        "top_categories": top_categories,
+        "plan_vs_actual": plan_vs_actual
+    }
