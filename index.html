@@ -524,8 +524,29 @@
     </section>
   </div>
 
+  <script src="./config.js"></script>
   <script>
-    const API = "https://budget-app-2-n449.onrender.com";
+    function normalizeApiBaseUrl(url) {
+      return String(url || "").trim().replace(/\/+$/, "");
+    }
+
+    function resolveApiBaseUrl() {
+      const configUrl = window.BUDGET_APP_CONFIG && window.BUDGET_APP_CONFIG.apiBaseUrl;
+      const normalizedConfigUrl = normalizeApiBaseUrl(configUrl);
+
+      if (normalizedConfigUrl) {
+        return normalizedConfigUrl;
+      }
+
+      const host = window.location.hostname;
+      if (host === "localhost" || host === "127.0.0.1") {
+        return "http://127.0.0.1:8000";
+      }
+
+      return `${window.location.protocol}//${window.location.host}`;
+    }
+
+    const API = resolveApiBaseUrl();
     let currentFilter = "";
     let categoriesMap = {};
 
