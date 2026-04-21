@@ -263,6 +263,76 @@
       color: var(--warning);
     }
 
+    .budget-health-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 18px;
+    }
+
+    .health-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .health-good {
+      background: #e6f4ea;
+      color: var(--success);
+    }
+
+    .health-warning {
+      background: #fff4e5;
+      color: var(--warning);
+    }
+
+    .health-danger {
+      background: #fce8e6;
+      color: var(--danger);
+    }
+
+    .health-neutral {
+      background: #eef2f7;
+      color: #334155;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 12px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--success);
+      transition: width 0.2s ease;
+    }
+
+    .mini-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .mini-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 14px;
+    }
+
     .categories-stack {
       display: grid;
       gap: 10px;
@@ -526,6 +596,48 @@
           <div class="stat-value" id="monthly-remaining">0 PLN</div>
         </div>
       </div>
+
+      <section style="margin-top: 20px;">
+        <div class="card-header">
+          <h3 class="card-title" style="font-size: 20px;">Budget Health</h3>
+          <p class="card-subtitle">Szybki podgląd stanu budżetu dla wybranego miesiąca.</p>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Wykorzystanie limitu</div>
+            <div class="stat-value" id="health-percent-used">0%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Liczba kategorii z wydatkami</div>
+            <div class="stat-value" id="health-categories-count">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Kategorii ponad plan</div>
+            <div class="stat-value value-red" id="health-over-budget-count">0</div>
+          </div>
+        </div>
+
+        <div class="budget-health-grid">
+          <div>
+            <div id="health-badge" class="health-badge health-neutral">Brak danych</div>
+            <div class="progress-track">
+              <div id="health-progress-fill" class="progress-fill"></div>
+            </div>
+            <div id="health-progress-text" class="helper-text">Uzupełnij limit i wydatki, aby zobaczyć postęp.</div>
+          </div>
+
+          <div>
+            <div class="stat-label">Top wydatki (kategorie)</div>
+            <div id="health-top-categories" class="mini-list"></div>
+          </div>
+        </div>
+
+        <div style="margin-top: 16px;">
+          <div class="stat-label">Plan vs wykonanie (kategorie)</div>
+          <div id="health-plan-vs-actual" class="mini-list"></div>
+        </div>
+      </section>
 
       <section style="margin-top: 20px;">
         <div class="card-header">
@@ -917,6 +1029,7 @@
 
         await load();
         await loadMonthlySummary();
+        await loadBudgetHealthDashboard();
       } catch (error) {
         alert(error.message);
       }
@@ -1012,8 +1125,9 @@
       try {
         await upsertBudgetPlan(category, nextValue);
         await loadBudgetPlans();
-      await loadRecurringTemplates();
-      clearRecurringForm();
+        await loadBudgetHealthDashboard();
+        await loadRecurringTemplates();
+        clearRecurringForm();
       } catch (error) {
         alert(error.message);
       }
@@ -1029,8 +1143,9 @@
           { method: "DELETE" }
         ));
         await loadBudgetPlans();
-      await loadRecurringTemplates();
-      clearRecurringForm();
+        await loadBudgetHealthDashboard();
+        await loadRecurringTemplates();
+        clearRecurringForm();
       } catch (error) {
         alert(error.message);
       }
@@ -1131,6 +1246,7 @@
         recurringMessage.textContent = `Wygenerowano: ${data.generated}, pominięto: ${data.skipped}.`;
         await load(currentFilters);
         await loadMonthlySummary();
+        await loadBudgetHealthDashboard();
       } catch (error) {
         recurringMessage.textContent = `Błąd: ${error.message}`;
       }
@@ -1155,6 +1271,7 @@
         await parseResponse(await fetch(`${API}/expenses/${id}`, { method: "DELETE" }));
         await load();
         await loadMonthlySummary();
+        await loadBudgetHealthDashboard();
       } catch (error) {
         alert(error.message);
       }
@@ -1184,6 +1301,7 @@
         messageEl.textContent = "Dodano wydatek.";
         await load();
         await loadMonthlySummary();
+        await loadBudgetHealthDashboard();
       } catch (error) {
         messageEl.textContent = `Błąd: ${error.message}`;
       }
@@ -1244,6 +1362,7 @@
         }));
 
         await loadMonthlySummary();
+        await loadBudgetHealthDashboard();
       } catch (error) {
         alert(error.message);
       }
@@ -1258,8 +1377,9 @@
         await upsertBudgetPlan(category, plannedAmount);
         document.getElementById("plan-amount").value = "";
         await loadBudgetPlans();
-      await loadRecurringTemplates();
-      clearRecurringForm();
+        await loadBudgetHealthDashboard();
+        await loadRecurringTemplates();
+        clearRecurringForm();
       } catch (error) {
         alert(error.message);
       }
@@ -1288,6 +1408,77 @@
       }
     }
 
+    function renderSimpleList(container, items, emptyMessage) {
+      container.innerHTML = "";
+      if (!items || items.length === 0) {
+        container.innerHTML = `<div class="empty-state">${emptyMessage}</div>`;
+        return;
+      }
+
+      items.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "mini-item";
+        row.innerHTML = item;
+        container.appendChild(row);
+      });
+    }
+
+    async function loadBudgetHealthDashboard() {
+      const year = parseInt(document.getElementById("limit-year").value);
+      const month = parseInt(document.getElementById("limit-month").value);
+      const data = await parseResponse(await fetch(`${API}/dashboard/monthly?year=${year}&month=${month}`));
+
+      document.getElementById("health-percent-used").textContent = `${data.percent_used.toFixed(1)}%`;
+      document.getElementById("health-categories-count").textContent = String(
+        data.plan_vs_actual.filter(item => item.spent > 0).length
+      );
+      document.getElementById("health-over-budget-count").textContent = String(
+        data.plan_vs_actual.filter(item => item.over_budget).length
+      );
+
+      const badge = document.getElementById("health-badge");
+      badge.classList.remove("health-good", "health-warning", "health-danger", "health-neutral");
+      const progressFill = document.getElementById("health-progress-fill");
+      const progressText = document.getElementById("health-progress-text");
+      const progressPercent = Math.min(data.percent_used, 100);
+      progressFill.style.width = `${progressPercent}%`;
+
+      if (data.health_status === "good") {
+        badge.textContent = "Status: Dobry";
+        badge.classList.add("health-good");
+        progressFill.style.background = "var(--success)";
+      } else if (data.health_status === "warning") {
+        badge.textContent = "Status: Uwaga";
+        badge.classList.add("health-warning");
+        progressFill.style.background = "var(--warning)";
+      } else if (data.health_status === "over_budget") {
+        badge.textContent = "Status: Przekroczony";
+        badge.classList.add("health-danger");
+        progressFill.style.background = "var(--danger)";
+      } else {
+        badge.textContent = "Status: Brak limitu";
+        badge.classList.add("health-neutral");
+        progressFill.style.background = "#64748b";
+      }
+
+      progressText.textContent = data.limit > 0
+        ? `Wydano ${data.spent} PLN z limitu ${data.limit} PLN.`
+        : "Nie ustawiono limitu miesięcznego.";
+
+      const topContainer = document.getElementById("health-top-categories");
+      const topRows = data.top_categories.map(item => (
+        `<span>${item.category}</span><strong>${item.spent} PLN (${item.share_percent.toFixed(1)}%)</strong>`
+      ));
+      renderSimpleList(topContainer, topRows, "Brak wydatków w tym miesiącu.");
+
+      const planContainer = document.getElementById("health-plan-vs-actual");
+      const planRows = data.plan_vs_actual.map(item => {
+        const status = item.over_budget ? "🔴 ponad plan" : "🟢 w planie";
+        return `<span>${item.category}</span><strong>${item.spent} / ${item.planned} PLN (${status})</strong>`;
+      });
+      renderSimpleList(planContainer, planRows, "Brak planów i wydatków dla tego miesiąca.");
+    }
+
     function setToday() {
       const d = new Date();
       date.value = d.toISOString().split("T")[0];
@@ -1298,6 +1489,7 @@
       setToday();
       await load();
       await loadMonthlySummary();
+      await loadBudgetHealthDashboard();
       await loadBudgetPlans();
       await loadRecurringTemplates();
       clearRecurringForm();
@@ -1305,6 +1497,7 @@
 
     document.getElementById("limit-year").addEventListener("change", async () => {
       await loadMonthlySummary();
+      await loadBudgetHealthDashboard();
       await loadBudgetPlans();
       await loadRecurringTemplates();
       clearRecurringForm();
@@ -1312,6 +1505,7 @@
 
     document.getElementById("limit-month").addEventListener("change", async () => {
       await loadMonthlySummary();
+      await loadBudgetHealthDashboard();
       await loadBudgetPlans();
       await loadRecurringTemplates();
       clearRecurringForm();
